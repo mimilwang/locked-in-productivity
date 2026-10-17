@@ -1,7 +1,7 @@
-import DailyChallengesPage from './pages/DailyChallengesPage'
+import CreateProfilePage from './pages/CreateProfilePage'
 
 function App() {
-  return <DailyChallengesPage />
+  return <CreateProfilePage />
 }
 
 export default App
