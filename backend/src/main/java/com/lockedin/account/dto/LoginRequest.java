@@ -1,5 +1,7 @@
 package com.lockedin.account.dto;
 
-// TODO: record: email, password
-public class LoginRequest {
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+
+public record LoginRequest(@NotBlank @Email String email, @NotBlank String password) {
 }

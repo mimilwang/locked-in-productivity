@@ -1,5 +1,5 @@
 package com.lockedin.account.dto;
 
-// TODO: record: token, user
-public class AuthResponse {
+/** Send the token on every request after this: "Authorization: Bearer <token>". */
+public record AuthResponse(String token, UserProfileResponse user) {
 }

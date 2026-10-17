@@ -1,5 +1,7 @@
 package com.lockedin.league.dto;
 
-// TODO: record: inviteCode, avatarUrl, agreedToRules
-public class JoinLeagueRequest {
+import jakarta.validation.constraints.NotBlank;
+
+/** agreedToRules must be true. avatarUrl is optional (defaults to your profile photo). */
+public record JoinLeagueRequest(@NotBlank String inviteCode, String avatarUrl, Boolean agreedToRules) {
 }

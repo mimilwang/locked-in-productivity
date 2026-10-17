@@ -1,5 +1,7 @@
 package com.lockedin.league.dto;
 
-// TODO: record: userId, displayName, avatarUrl, role
-public class MemberResponse {
+import com.lockedin.league.MemberRole;
+import java.time.Instant;
+
+public record MemberResponse(Long userId, String displayName, String avatarUrl, MemberRole role, Instant joinedAt) {
 }

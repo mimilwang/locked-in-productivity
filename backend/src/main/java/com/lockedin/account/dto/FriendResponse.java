@@ -1,5 +1,7 @@
 package com.lockedin.account.dto;
 
-// TODO: record: userId, displayName, photoUrl, status
-public class FriendResponse {
+import com.lockedin.account.friends.FriendshipStatus;
+
+/** requestId is what you pass to accept/decline. userId is the OTHER person. */
+public record FriendResponse(Long requestId, Long userId, String displayName, String photoUrl, FriendshipStatus status) {
 }

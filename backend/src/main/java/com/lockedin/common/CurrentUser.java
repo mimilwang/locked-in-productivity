@@ -1,8 +1,23 @@
 package com.lockedin.common;
 
-// TODO: single place every controller gets the logged-in userId.
-//   1. Read userId from the SecurityContext (set by account.auth.JwtAuthFilter).
-//   2. TEMPORARY fallback until auth works: read the X-User-Id header.
-//   Remove the fallback before deploying.
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+
+/**
+ * The one place every controller gets the logged-in user's id.
+ *
+ * account.auth.JwtAuthFilter puts the userId into the SecurityContext, either from
+ * "Authorization: Bearer <token>" or (TEMPORARY, while auth.dev-header-enabled=true) from "X-User-Id: 1".
+ */
+@Component
 public class CurrentUser {
+
+    public Long id() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !(auth.getPrincipal() instanceof Long userId)) {
+            throw ApiException.unauthorized("You need to log in");
+        }
+        return userId;
+    }
 }

@@ -1,5 +1,10 @@
 package com.lockedin.account;
 
-// TODO: badge types, e.g. FIRST_LOG, SEVEN_DAY_STREAK, MVP
+/** Badges shown on a profile. They're calculated from a user's history, not stored. */
 public enum Badge {
+    FIRST_LOG,
+    THREE_DAY_STREAK,
+    SEVEN_DAY_STREAK,
+    MVP,
+    CHUD
 }
