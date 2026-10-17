@@ -1,7 +1,7 @@
-import CreateProfilePage from './pages/CreateProfilePage'
+import LiveFeedPage from './pages/LiveFeedPage'
 
 function App() {
-  return <CreateProfilePage />
+  return <LiveFeedPage />
 }
 
 export default App
