@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { getFocusSessions } from '../lib/sessionLog'
 
 type Leader = {
   rank: number
@@ -29,6 +30,8 @@ const days = [
 
 export default function LeagueOverviewPage() {
   const [checkedIn, setCheckedIn] = useState(false)
+  const [focusSessions] = useState(() => getFocusSessions())
+  const latestFocusSession = focusSessions[0]
   const completed = checkedIn ? 18 : 17
   const weeklyPercent = Math.round((completed / 24) * 100)
 
@@ -45,7 +48,7 @@ export default function LeagueOverviewPage() {
         <nav className="nav" aria-label="Main navigation">
           <p className="nav-label">YOUR LEAGUE</p>
           <a className="nav-link active" href="#overview"><span>▦</span> Overview</a>
-          <a className="nav-link" href="#check-in"><span>✓</span> Daily check-in</a>
+          <a className="nav-link" href="/timer"><span>✓</span> Daily check-in</a>
           <a className="nav-link" href="#leaderboard"><span>▥</span> Leaderboard</a>
           <a className="nav-link" href="#awards"><span>♕</span> Monthly awards</a>
           <a className="nav-link" href="#dare-wheel"><span>◎</span> Dare wheel</a>
@@ -99,7 +102,7 @@ export default function LeagueOverviewPage() {
 
           <section className="stats-strip" aria-label="Your weekly statistics">
             <article><span>YOUR STREAK</span><strong>12 <small>days</small></strong><p>Personal best: 18</p></article>
-            <article><span>THIS WEEK</span><strong>3 <small>/ 4 sessions</small></strong><p>One more to hit your goal</p></article>
+            <article><span>THIS WEEK</span><strong>{Math.min(4, 3 + focusSessions.length)} <small>/ 4 sessions</small></strong><p>{focusSessions.length ? 'Your timer progress is logged' : 'One more to hit your goal'}</p></article>
             <article><span>POINTS EARNED</span><strong>120</strong><p className="positive">↑ 25 from last week</p></article>
             <article><span>LEAGUE RANK</span><strong>1st</strong><p>Holding the top spot</p></article>
           </section>
@@ -160,7 +163,11 @@ export default function LeagueOverviewPage() {
             </article>
             <article className="activity-card">
               <div className="panel-heading"><h3>Recent activity</h3><a href="#all-activity">View all →</a></div>
-              <p><span className="avatar avatar-small" style={{ background: '#d9e6cb' }}>MP</span><span><strong>Maya</strong> completed a focus session<small>12 minutes ago · +25 pts</small></span></p>
+              {latestFocusSession ? (
+                <p><span className="avatar avatar-small avatar-green">AC</span><span><strong>You</strong> completed a {latestFocusSession.goalMinutes}-minute focus session<small>{new Date(latestFocusSession.completedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })} · +{latestFocusSession.points} pts</small></span></p>
+              ) : (
+                <p><span className="avatar avatar-small" style={{ background: '#d9e6cb' }}>MP</span><span><strong>Maya</strong> completed a focus session<small>12 minutes ago · +25 pts</small></span></p>
+              )}
               <p><span className="avatar avatar-small" style={{ background: '#f0d58a' }}>JP</span><span><strong>Jordan</strong> reached a 7-day streak<small>1 hour ago · +15 bonus pts</small></span></p>
             </article>
           </section>
