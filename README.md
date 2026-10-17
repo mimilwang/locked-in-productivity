@@ -1,75 +1,52 @@
-# React + TypeScript + Vite
+# Locked In
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Fantasy-league habit tracking for people who need more than willpower.
 
-Currently, two official plugins are available:
+Locked In turns self-improvement into friendly competition. Create a private league, set a shared weekly goal, and race your friends on daily leaderboards — with real stakes you choose together.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Why
 
-## React Compiler
+College students know what they should be doing — studying, working out, sleeping better — but solo habit apps make it easy to quit with no one noticing. Locked In adds peer accountability, collaborative goals, and light competition so building habits feels social, not solitary.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## How it works
 
-## Expanding the ESLint configuration
+1. **Form a league** — Invite 4–15 friends into a private group.
+2. **Set a group goal** — Everyone works toward the same weekly objective.
+3. **Compete daily** — Earn points for progress, completed goals, streaks, and group contributions.
+4. **Crown the month** — Highest score becomes **MVP**. Lowest gets **Chud of the Month**.
+5. **Settle up** — Leagues pick their own rewards (cash pot, winner’s dinner covered, group outing) and last place spins a wheel of low-stakes punishments the group invented.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Features
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Private leagues with custom size (4–15 members)
+- Shared weekly goals + individual progress
+- Daily leaderboards and streak tracking
+- Monthly MVP / Chud of the Month titles
+- Group-defined rewards and punishment wheel
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Tech stack
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- React + TypeScript
+- Vite
 
+## Getting started
+
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+Then open the local URL Vite prints (usually `http://localhost:5173`).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Scripts
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Command         | Description              |
+|-----------------|--------------------------|
+| `npm run dev`   | Start the dev server     |
+| `npm run build` | Typecheck and production build |
+| `npm run preview` | Preview the production build |
+| `npm run lint`  | Run ESLint               |
 
-```
+## License
+
+Private / unpublished.
