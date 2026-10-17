@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: locked-in
+  datasource:
+    url: jdbc:h2:mem:lockedin;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  h2:
+    console:
+      enabled: true
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+server:
+  port: 8080
+
+# Auth: replace the secret with an env variable before deploying (at least 32 characters).
+jwt:
+  secret: ${JWT_SECRET:dev-only-secret-change-me-dev-only-secret}
+  expiration-hours: 24
+
+auth:
+  # TEMPORARY: lets you send "X-User-Id: 1" instead of a JWT while testing.
+  # Set to false before deploying.
+  dev-header-enabled: true
+
+app:
+  cors:
+    allowed-origins: http://localhost:5173
+
+images:
+  upload-dir: uploads
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+# All scoring numbers live here. Change them in one place.
+# Your weekly score = % of the league's weekly goal you've done (rounded down), max max-weekly-points.
+scoring:
+  max-weekly-points: 100     # 100% of the weekly goal = 100 points (50% = 50)
+  max-log-minutes: 240       # longest single log / timer that counts
+  week-starts-on: MONDAY     # weekly scores reset on this day
+
+monthly-results:
+  cron: "0 5 0 1 * *"        # 12:05am on the 1st of every month
+  zone: America/Los_Angeles
