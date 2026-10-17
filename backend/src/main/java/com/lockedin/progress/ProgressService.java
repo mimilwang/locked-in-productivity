@@ -3,6 +3,7 @@ package com.lockedin.progress;
 import com.lockedin.account.UserService;
 import com.lockedin.common.ApiException;
 import com.lockedin.common.TimeUtils;
+import com.lockedin.league.GoalType;
 import com.lockedin.league.League;
 import com.lockedin.league.LeagueService;
 import com.lockedin.progress.dto.LogResponse;
@@ -83,13 +84,17 @@ public class ProgressService {
         if (day.isAfter(today)) {
             throw ApiException.badRequest("You can't log progress in the future");
         }
-        if (request.minutes() > rules.maxLogMinutes()) {
+        int minutes = request.minutes() == null ? 0 : request.minutes();
+        if (league.getGoalType() == GoalType.TIME && minutes < 1) {
+            throw ApiException.badRequest("Enter how many minutes you did");
+        }
+        if (minutes > rules.maxLogMinutes()) {
             throw ApiException.badRequest("A single log can't be longer than " + rules.maxLogMinutes() + " minutes");
         }
         requireLeagueActive(league, day);
 
         Instant now = clock.instant();
-        ProgressLog log = logs.save(new ProgressLog(me, league.getId(), now, now, request.minutes(),
+        ProgressLog log = logs.save(new ProgressLog(me, league.getId(), now, now, minutes,
                 LogSource.MANUAL, day, request.note()));
         scoringService.recalculateLeague(league.getId());
         return LogResponse.from(log);

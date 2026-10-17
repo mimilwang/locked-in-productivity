@@ -7,11 +7,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
-import java.util.List;
 
 /**
+ * One goal for the whole league; every member has to hit it on their own each week.
+ * goalType TIME: weeklyTarget in minutes (5 hours = 300). goalType TASKS: weeklyTarget in tasks.
+ * reward / punishment are plain text the frontend displays however it likes.
  * startDate defaults to today; durationWeeks defaults to 4.
- * wheelOptions is the list of punishments on the wheel (optional).
  */
 public record CreateLeagueRequest(
         @NotBlank @Size(max = 60) String name,
@@ -23,6 +24,5 @@ public record CreateLeagueRequest(
         String photoUrl,
         @NotBlank @Size(max = 200) String reward,
         @NotBlank @Size(max = 200) String punishment,
-        @Size(max = 12) List<@NotBlank @Size(max = 100) String> wheelOptions,
         String avatarUrl) {
 }

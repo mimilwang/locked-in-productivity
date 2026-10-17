@@ -26,7 +26,8 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 
 /**
- * Rankings. Ties are broken by: more points, then more minutes, then longer streak, then who joined first.
+ * Rankings. Ties are broken by: more points, then more progress (minutes or tasks), then longer streak,
+ * then who joined first.
  * Every member gets a unique rank (1, 2, 3...), so first and last place are always clear.
  */
 @Service
@@ -72,11 +73,13 @@ public class LeaderboardService {
         Map<Long, Integer> progress = new HashMap<>();
         int totalMinutes = 0;
         for (ProgressLog log : logs.findCompletedByLeagueId(leagueId)) {
-            if (log.getDurationMinutes() <= 0 || log.getLocalDate().isBefore(weekStart) || log.getLocalDate().isAfter(weekEnd)) {
+            if (log.getLocalDate().isBefore(weekStart) || log.getLocalDate().isAfter(weekEnd)) {
                 continue;
             }
-            int amount = league.getGoalType() == GoalType.SESSIONS ? 1 : log.getDurationMinutes();
-            progress.merge(log.getUserId(), amount, Integer::sum);
+            int amount = ScoringEngine.amountFor(league.getGoalType(), log.getDurationMinutes());
+            if (amount > 0) {
+                progress.merge(log.getUserId(), amount, Integer::sum);
+            }
             totalMinutes += log.getDurationMinutes();
         }
         List<LeagueMember> members = leagueService.getMembers(leagueId);
@@ -111,18 +114,24 @@ public class LeaderboardService {
         }
 
         Map<Long, Integer> minutes = new HashMap<>();
+        Map<Long, Integer> tasks = new HashMap<>();
         Map<Long, Set<LocalDate>> activeDays = new HashMap<>();
         for (ProgressLog log : logs.findCompletedByLeagueId(league.getId())) {
-            if (log.getDurationMinutes() <= 0) {
-                continue;
+            if (ScoringEngine.amountFor(league.getGoalType(), log.getDurationMinutes()) <= 0) {
+                continue; // e.g. a 0-minute timer in a TIME league
             }
             activeDays.computeIfAbsent(log.getUserId(), id -> new HashSet<>()).add(log.getLocalDate());
             if (!log.getLocalDate().isBefore(from) && !log.getLocalDate().isAfter(to)) {
                 minutes.merge(log.getUserId(), log.getDurationMinutes(), Integer::sum);
+                tasks.merge(log.getUserId(), 1, Integer::sum);
             }
         }
+        boolean taskGoal = league.getGoalType() == GoalType.TASKS;
 
-        record Row(LeagueMember member, User user, int points, int minutes, int streak) {
+        record Row(LeagueMember member, User user, int points, int minutes, int tasks, int streak) {
+            int progress(boolean taskGoal) {
+                return taskGoal ? tasks : minutes;
+            }
         }
         List<Row> rows = new ArrayList<>();
         for (LeagueMember m : members) {
@@ -131,10 +140,11 @@ public class LeaderboardService {
                 continue;
             }
             int streak = StreakCalculator.currentStreak(activeDays.getOrDefault(m.getUserId(), Set.of()), asOf);
-            rows.add(new Row(m, u, points.getOrDefault(m.getUserId(), 0), minutes.getOrDefault(m.getUserId(), 0), streak));
+            rows.add(new Row(m, u, points.getOrDefault(m.getUserId(), 0), minutes.getOrDefault(m.getUserId(), 0),
+                    tasks.getOrDefault(m.getUserId(), 0), streak));
         }
         rows.sort(Comparator.comparingInt(Row::points).reversed()
-                .thenComparing(Comparator.comparingInt(Row::minutes).reversed())
+                .thenComparing(Comparator.comparingInt((Row r) -> r.progress(taskGoal)).reversed())
                 .thenComparing(Comparator.comparingInt(Row::streak).reversed())
                 .thenComparing(r -> r.member().getJoinedAt()));
 
@@ -142,7 +152,7 @@ public class LeaderboardService {
         for (int i = 0; i < rows.size(); i++) {
             Row r = rows.get(i);
             result.add(new LeaderboardEntry(i + 1, r.user().getId(), r.user().getDisplayName(),
-                    LeagueService.avatarFor(r.member(), r.user()), r.points(), r.minutes(), r.streak()));
+                    LeagueService.avatarFor(r.member(), r.user()), r.points(), r.minutes(), r.tasks(), r.streak()));
         }
         return result;
     }

@@ -64,7 +64,6 @@ public class LeagueService {
                 request.photoUrl(),
                 request.reward().trim(),
                 request.punishment().trim(),
-                request.wheelOptions() == null ? List.of() : request.wheelOptions().stream().map(String::trim).toList(),
                 me,
                 now));
 

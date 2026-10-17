@@ -81,10 +81,9 @@ public class DemoDataSeeder implements CommandLineRunner {
             return users.save(new User(name, name.toLowerCase(), name.toLowerCase() + "@lockedin.dev", hash, zone, now));
         }).toList();
 
-        League league = leagues.save(new League("Study Grind", "Study 5 hours a week", GoalType.MINUTES, 300,
+        League league = leagues.save(new League("Study Grind", "Study 5 hours a week", GoalType.TIME, 300,
                 today.minusDays(13), today.minusDays(13).plusWeeks(4).minusDays(1), inviteCodes.generate(), null,
-                "Winner's dinner is covered", "Spin the wheel",
-                List.of("Sing in the dining hall", "Wear a costume to class", "Buy everyone boba", "Post an embarrassing photo"),
+                "Winner's dinner is covered by everyone else", "Wear a costume to class for a day",
                 created.get(0).getId(), now));
 
         for (int i = 0; i < created.size(); i++) {

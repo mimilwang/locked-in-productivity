@@ -42,15 +42,11 @@ springdoc:
     path: /swagger-ui.html
 
 # All scoring numbers live here. Change them in one place.
+# Your weekly score = % of the league's weekly goal you've done (rounded down), max max-weekly-points.
 scoring:
-  minutes-per-point: 10      # 1 point for every 10 minutes logged
-  daily-point-cap: 30        # max minute-points per person per day
-  weekly-goal-bonus: 20      # bonus the day you hit the weekly goal
-  streak-bonus-per-day: 2    # streak bonus = streak length x this (from day 2 of a streak)
-  streak-bonus-cap: 10       # max streak bonus per day
-  group-goal-bonus: 5        # everyone gets this when the WHOLE league hits the weekly goal
-  max-log-minutes: 240       # longest single log allowed
-  week-starts-on: MONDAY
+  max-weekly-points: 100     # 100% of the weekly goal = 100 points (50% = 50)
+  max-log-minutes: 240       # longest single log / timer that counts
+  week-starts-on: MONDAY     # weekly scores reset on this day
 
 monthly-results:
   cron: "0 5 0 1 * *"        # 12:05am on the 1st of every month

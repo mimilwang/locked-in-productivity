@@ -12,7 +12,6 @@ import com.lockedin.league.dto.CreateLeagueRequest;
 import com.lockedin.league.dto.JoinLeagueRequest;
 import com.lockedin.league.dto.LeagueResponse;
 import java.time.LocalDate;
-import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -42,6 +41,8 @@ class LeagueServiceTest {
         assertEquals(6, league.inviteCode().length());
         assertFalse(league.readyToStart());
         assertEquals(league.startDate().plusWeeks(4).minusDays(1), league.endDate());
+        assertEquals("Free dinner", league.reward());
+        assertEquals("Do a dare", league.punishment());
     }
 
     @Test
@@ -101,8 +102,8 @@ class LeagueServiceTest {
     @Test
     void startDateCannotBeInThePast() {
         Long owner = TestFixtures.newUser(auth, "Owner");
-        CreateLeagueRequest past = new CreateLeagueRequest("Old", "Goal", GoalType.MINUTES, 300,
-                LocalDate.now().minusDays(7), 4, null, "Reward", "Punishment", List.of(), null);
+        CreateLeagueRequest past = new CreateLeagueRequest("Old", "Goal", GoalType.TIME, 300,
+                LocalDate.now().minusDays(7), 4, null, "Reward", "Punishment", null);
 
         ApiException e = assertThrows(ApiException.class, () -> leagues.create(owner, past));
         assertEquals(HttpStatus.BAD_REQUEST, e.getStatus());

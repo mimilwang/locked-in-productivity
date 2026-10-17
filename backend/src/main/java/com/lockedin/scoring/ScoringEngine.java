@@ -4,7 +4,6 @@ import com.lockedin.common.TimeUtils;
 import com.lockedin.league.GoalType;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,11 +16,14 @@ import java.util.TreeMap;
  * Turns progress logs into points. This is a PURE function: same input, same output, no database.
  * That's what makes it easy to unit test (see ScoringEngineTest).
  *
- * How points work (numbers come from ScoringRules / application.yml):
- *   MINUTES      floor(minutes that day / minutesPerPoint), max dailyPointCap per day
- *   STREAK       from day 2 of a streak: streak length x streakBonusPerDay, max streakBonusCap
- *   WEEKLY_GOAL  weeklyGoalBonus on the day your weekly total reaches the target (once per week)
- *   GROUP_BONUS  groupGoalBonus to everyone, once per week, when every member has hit the target
+ * How points work:
+ *   - The league has ONE weekly goal (e.g. 300 minutes, or 4 tasks). Every member has to hit it on their own.
+ *   - Your weekly score = the % of the goal you've done, rounded down. 50% = 50 points, 100% = 100 points.
+ *   - It's capped at 100 per week (maxWeeklyPoints). Doing more than the goal doesn't add points.
+ *   - Points are saved on the day you earned them. Going from 40% to 65% on Wednesday = 25 points on Wednesday.
+ *     That's what the daily leaderboard shows, and monthly totals add up correctly even when a week
+ *     spans two months.
+ *   - TIME goals count minutes. TASKS goals count every log as 1 task.
  */
 public final class ScoringEngine {
 
@@ -41,86 +43,58 @@ public final class ScoringEngine {
     public record Award(Long userId, LocalDate date, int points, ScoreReason reason) {
     }
 
-    private static final class DayTotal {
-        int minutes;
-        int sessions;
-    }
-
     public static List<Award> calculate(Input input, ScoringRules rules) {
         Set<Long> members = new HashSet<>(input.memberIds());
 
-        // 1. Add up each member's minutes and sessions per day (only days inside the league).
-        Map<Long, TreeMap<LocalDate, DayTotal>> days = new HashMap<>();
+        // 1. How much progress each member made each day (minutes, or number of tasks).
+        Map<Long, TreeMap<LocalDate, Integer>> progressByDay = new HashMap<>();
         for (LogEntry log : input.logs()) {
-            if (!members.contains(log.userId()) || log.minutes() <= 0) {
+            if (!members.contains(log.userId())) {
                 continue;
             }
             if (log.date().isBefore(input.startDate()) || log.date().isAfter(input.endDate())) {
                 continue;
             }
-            DayTotal total = days.computeIfAbsent(log.userId(), id -> new TreeMap<>())
-                    .computeIfAbsent(log.date(), d -> new DayTotal());
-            total.minutes += log.minutes();
-            total.sessions += 1;
+            int amount = amountFor(input.goalType(), log.minutes());
+            if (amount <= 0) {
+                continue;
+            }
+            progressByDay.computeIfAbsent(log.userId(), id -> new TreeMap<>()).merge(log.date(), amount, Integer::sum);
         }
 
+        // 2. Walk through each member's days in order, keeping a running total per week.
+        //    Each day earns the jump in their weekly %.
         List<Award> awards = new ArrayList<>();
-        // weekStart -> (userId -> the day they hit the weekly target)
-        Map<LocalDate, Map<Long, LocalDate>> weeklyHits = new TreeMap<>();
-
         for (Long userId : input.memberIds()) {
-            TreeMap<LocalDate, DayTotal> userDays = days.getOrDefault(userId, new TreeMap<>());
+            Map<LocalDate, Integer> weeklyTotal = new HashMap<>();
+            for (Map.Entry<LocalDate, Integer> day : progressByDay.getOrDefault(userId, new TreeMap<>()).entrySet()) {
+                LocalDate weekStart = TimeUtils.weekStart(day.getKey(), rules.weekStartsOn());
+                int before = weeklyTotal.getOrDefault(weekStart, 0);
+                int after = before + day.getValue();
+                weeklyTotal.put(weekStart, after);
 
-            LocalDate previousDay = null;
-            int streak = 0;
-            Map<LocalDate, Integer> weekProgress = new HashMap<>();
-
-            for (Map.Entry<LocalDate, DayTotal> entry : userDays.entrySet()) {
-                LocalDate day = entry.getKey();
-                DayTotal total = entry.getValue();
-
-                // 2. Minute points, capped per day.
-                int minutePoints = Math.min(total.minutes / rules.minutesPerPoint(), rules.dailyPointCap());
-                if (minutePoints > 0) {
-                    awards.add(new Award(userId, day, minutePoints, ScoreReason.MINUTES));
-                }
-
-                // 3. Streak bonus (from the 2nd day in a row).
-                streak = (previousDay != null && previousDay.plusDays(1).equals(day)) ? streak + 1 : 1;
-                previousDay = day;
-                if (streak >= 2) {
-                    int bonus = Math.min(streak * rules.streakBonusPerDay(), rules.streakBonusCap());
-                    awards.add(new Award(userId, day, bonus, ScoreReason.STREAK));
-                }
-
-                // 4. Weekly goal: award it on the day the running weekly total first reaches the target.
-                LocalDate weekStart = TimeUtils.weekStart(day, rules.weekStartsOn());
-                int before = weekProgress.getOrDefault(weekStart, 0);
-                int added = input.goalType() == GoalType.SESSIONS ? total.sessions : total.minutes;
-                int after = before + added;
-                weekProgress.put(weekStart, after);
-                if (before < input.weeklyTarget() && after >= input.weeklyTarget()) {
-                    awards.add(new Award(userId, day, rules.weeklyGoalBonus(), ScoreReason.WEEKLY_GOAL));
-                    weeklyHits.computeIfAbsent(weekStart, w -> new HashMap<>()).put(userId, day);
+                int gained = weeklyPoints(after, input.weeklyTarget(), rules) - weeklyPoints(before, input.weeklyTarget(), rules);
+                if (gained > 0) {
+                    awards.add(new Award(userId, day.getKey(), gained, ScoreReason.WEEKLY_PROGRESS));
                 }
             }
         }
 
-        // 5. Group bonus: if EVERY member hit the target that week, everyone gets it on the day the last one did.
-        if (input.memberIds().size() >= 2) {
-            for (Map<Long, LocalDate> hits : weeklyHits.values()) {
-                if (hits.keySet().containsAll(members)) {
-                    LocalDate lastHit = Collections.max(hits.values());
-                    for (Long userId : input.memberIds()) {
-                        awards.add(new Award(userId, lastHit, rules.groupGoalBonus(), ScoreReason.GROUP_BONUS));
-                    }
-                }
-            }
-        }
-
-        awards.sort(Comparator.comparing(Award::date)
-                .thenComparing(Award::userId)
-                .thenComparing(Award::reason));
+        awards.sort(Comparator.comparing(Award::date).thenComparing(Award::userId));
         return awards;
+    }
+
+    /** Points for having done `progress` out of `target` this week: % of the goal, rounded down, max 100. */
+    public static int weeklyPoints(int progress, int target, ScoringRules rules) {
+        if (target <= 0 || progress <= 0) {
+            return 0;
+        }
+        long capped = Math.min(progress, target);
+        return (int) (capped * rules.maxWeeklyPoints() / target);
+    }
+
+    /** What one log adds toward the goal: its minutes for TIME goals, 1 for TASKS goals. */
+    public static int amountFor(GoalType goalType, int minutes) {
+        return goalType == GoalType.TASKS ? 1 : Math.max(minutes, 0);
     }
 }

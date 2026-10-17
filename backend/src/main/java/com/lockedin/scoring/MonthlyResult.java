@@ -30,9 +30,6 @@ public class MonthlyResult {
 
     private Long chudUserId;
 
-    /** What the punishment wheel landed on. */
-    private String punishment;
-
     /** Full standings as JSON (a list of LeaderboardEntry). */
     @Column(length = 20000)
     private String standingsJson;
@@ -47,10 +44,9 @@ public class MonthlyResult {
         this.month = month;
     }
 
-    public void update(Long mvpUserId, Long chudUserId, String punishment, String standingsJson, Instant finalizedAt) {
+    public void update(Long mvpUserId, Long chudUserId, String standingsJson, Instant finalizedAt) {
         this.mvpUserId = mvpUserId;
         this.chudUserId = chudUserId;
-        this.punishment = punishment;
         this.standingsJson = standingsJson;
         this.finalizedAt = finalizedAt;
     }
@@ -73,10 +69,6 @@ public class MonthlyResult {
 
     public Long getChudUserId() {
         return chudUserId;
-    }
-
-    public String getPunishment() {
-        return punishment;
     }
 
     public String getStandingsJson() {

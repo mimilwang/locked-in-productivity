@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.lockedin.TestFixtures;
 import com.lockedin.account.auth.AuthService;
 import com.lockedin.common.ApiException;
+import com.lockedin.league.GoalType;
 import com.lockedin.league.LeagueService;
 import com.lockedin.progress.dto.LogResponse;
 import com.lockedin.progress.dto.ManualLogRequest;
@@ -42,7 +43,7 @@ class ProgressServiceTest {
     @BeforeEach
     void setUp() {
         me = TestFixtures.newUser(auth, "Renee");
-        leagueId = leagues.create(me, TestFixtures.league(1000)).id();
+        leagueId = leagues.create(me, TestFixtures.league(300)).id(); // 5 hours a week
     }
 
     private int myWeeklyPoints() {
@@ -51,8 +52,23 @@ class ProgressServiceTest {
 
     @Test
     void manualLogAddsPointsRightAway() {
-        progress.logManually(me, new ManualLogRequest(leagueId, 25, null, null));
-        assertEquals(2, myWeeklyPoints());
+        // 90 of 300 minutes = 30%
+        progress.logManually(me, new ManualLogRequest(leagueId, 90, null, null));
+        assertEquals(30, myWeeklyPoints());
+    }
+
+    @Test
+    void timeGoalsNeedMinutes() {
+        ApiException e = assertThrows(ApiException.class,
+                () -> progress.logManually(me, new ManualLogRequest(leagueId, null, null, null)));
+        assertEquals(HttpStatus.BAD_REQUEST, e.getStatus());
+    }
+
+    @Test
+    void taskGoalsCountEachLogAsOneTask() {
+        Long taskLeague = leagues.create(me, TestFixtures.league(GoalType.TASKS, 4)).id();
+        progress.logManually(me, new ManualLogRequest(taskLeague, null, null, "gym"));
+        assertEquals(25, leaderboards.leaderboard(me, taskLeague, LeaderboardPeriod.WEEKLY).get(0).points());
     }
 
     @Test
@@ -122,8 +138,8 @@ class ProgressServiceTest {
 
     @Test
     void deletingALogRemovesItsPoints() {
-        LogResponse log = progress.logManually(me, new ManualLogRequest(leagueId, 50, null, null));
-        assertEquals(5, myWeeklyPoints());
+        LogResponse log = progress.logManually(me, new ManualLogRequest(leagueId, 150, null, null));
+        assertEquals(50, myWeeklyPoints());
         progress.delete(me, log.id());
         assertEquals(0, myWeeklyPoints());
     }

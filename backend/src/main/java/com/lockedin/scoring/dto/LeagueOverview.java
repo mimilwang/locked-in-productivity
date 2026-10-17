@@ -8,7 +8,7 @@ import java.util.List;
  * Everything for the league overview page in one call.
  * todaysLeader is null if nobody has points today.
  * groupGoalProgress is 0.0-1.0 (share of members who hit the weekly target).
- * myWeeklyProgress is your minutes or sessions this week (depends on goalType).
+ * myWeeklyProgress is your minutes (TIME) or tasks (TASKS) this week. Your weekly points are in weeklyLeaderboard.
  */
 public record LeagueOverview(
         Long leagueId,

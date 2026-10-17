@@ -16,7 +16,6 @@ import com.lockedin.progress.dto.ManualLogRequest;
 import com.lockedin.scoring.dto.MonthlyResultResponse;
 import java.time.YearMonth;
 import java.time.ZoneId;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +55,7 @@ class MonthlyResultsJobTest {
         leagues.join(middle, new JoinLeagueRequest(league.inviteCode(), null, true));
         leagues.join(loser, new JoinLeagueRequest(league.inviteCode(), null, true));
 
+        // 1000-minute weekly goal: 12%, 6%, 1%
         progress.logManually(winner, new ManualLogRequest(leagueId, 120, null, null));
         progress.logManually(middle, new ManualLogRequest(leagueId, 60, null, null));
         progress.logManually(loser, new ManualLogRequest(leagueId, 10, null, null));
@@ -69,8 +69,10 @@ class MonthlyResultsJobTest {
         assertEquals(winner, result.mvp().userId());
         assertEquals(loser, result.chud().userId());
         assertEquals(3, result.standings().size());
-        assertTrue(List.of("Dare A", "Dare B").contains(result.punishment()));
+        assertEquals(12, result.mvp().points());
+        assertEquals(1, result.chud().points());
         assertEquals("Free dinner", result.reward());
+        assertEquals("Do a dare", result.punishment());
     }
 
     @Test

@@ -4,7 +4,6 @@ import com.lockedin.account.auth.AuthService;
 import com.lockedin.account.dto.SignUpRequest;
 import com.lockedin.league.GoalType;
 import com.lockedin.league.dto.CreateLeagueRequest;
-import java.util.List;
 
 /** Small helpers so tests don't repeat setup code. */
 public final class TestFixtures {
@@ -18,9 +17,13 @@ public final class TestFixtures {
                 "America/Los_Angeles", null)).user().id();
     }
 
-    /** A 4-week MINUTES league starting today. */
+    /** A 4-week TIME league starting today. */
     public static CreateLeagueRequest league(int weeklyTargetMinutes) {
-        return new CreateLeagueRequest("Test League", "Study every week", GoalType.MINUTES, weeklyTargetMinutes,
-                null, 4, null, "Free dinner", "Do a dare", List.of("Dare A", "Dare B"), null);
+        return league(GoalType.TIME, weeklyTargetMinutes);
+    }
+
+    public static CreateLeagueRequest league(GoalType goalType, int weeklyTarget) {
+        return new CreateLeagueRequest("Test League", "Study every week", goalType, weeklyTarget,
+                null, 4, null, "Free dinner", "Do a dare", null);
     }
 }

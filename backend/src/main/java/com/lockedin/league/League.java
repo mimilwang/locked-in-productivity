@@ -1,21 +1,15 @@
 package com.lockedin.league;
 
-import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "leagues")
@@ -36,7 +30,7 @@ public class League {
     @Column(nullable = false)
     private GoalType goalType;
 
-    /** What each member needs per week: minutes or sessions, depending on goalType. */
+    /** What EACH member needs per week: minutes (TIME) or tasks (TASKS). */
     @Column(nullable = false)
     private int weeklyTarget;
 
@@ -52,19 +46,13 @@ public class League {
 
     private String photoUrl;
 
-    /** What first place wins. */
+    /** What first place (MVP) wins. Plain text, e.g. "Dinner is on everyone else". */
     @Column(nullable = false)
     private String reward;
 
-    /** What last place has to do. */
+    /** What last place (Chud) has to do. Plain text. */
     @Column(nullable = false)
     private String punishment;
-
-    /** Options on the punishment wheel. If empty, the Chud just gets `punishment`. */
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "league_wheel_options", joinColumns = @JoinColumn(name = "league_id"))
-    @Column(name = "option_text")
-    private List<String> wheelOptions = new ArrayList<>();
 
     @Column(nullable = false)
     private Long creatorId;
@@ -77,7 +65,7 @@ public class League {
 
     public League(String name, String goalDescription, GoalType goalType, int weeklyTarget,
                   LocalDate startDate, LocalDate endDate, String inviteCode, String photoUrl,
-                  String reward, String punishment, List<String> wheelOptions, Long creatorId, Instant createdAt) {
+                  String reward, String punishment, Long creatorId, Instant createdAt) {
         this.name = name;
         this.goalDescription = goalDescription;
         this.goalType = goalType;
@@ -88,7 +76,6 @@ public class League {
         this.photoUrl = photoUrl;
         this.reward = reward;
         this.punishment = punishment;
-        this.wheelOptions = wheelOptions == null ? new ArrayList<>() : new ArrayList<>(wheelOptions);
         this.creatorId = creatorId;
         this.createdAt = createdAt;
     }
@@ -140,10 +127,6 @@ public class League {
 
     public String getPunishment() {
         return punishment;
-    }
-
-    public List<String> getWheelOptions() {
-        return wheelOptions;
     }
 
     public Long getCreatorId() {

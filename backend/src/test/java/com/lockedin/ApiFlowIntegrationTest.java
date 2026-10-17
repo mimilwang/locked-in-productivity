@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,8 +74,8 @@ class ApiFlowIntegrationTest {
         JsonNode bee = signUp("Bee");
 
         String leagueBody = json.writeValueAsString(Map.of(
-                "name", "Gym Rats", "goalDescription", "30 minutes a week", "goalType", "MINUTES",
-                "weeklyTarget", 30, "reward", "Dinner", "punishment", "Dare", "wheelOptions", List.of("Dare 1")));
+                "name", "Leetcode Grind", "goalDescription", "2 hours of leetcode a week", "goalType", "TIME",
+                "weeklyTarget", 120, "reward", "Dinner", "punishment", "Dare"));
         JsonNode league = json.readTree(mvc.perform(post("/leagues").header("Authorization", bearer(owner))
                         .contentType(MediaType.APPLICATION_JSON).content(leagueBody))
                 .andExpect(status().isCreated())
@@ -90,7 +89,7 @@ class ApiFlowIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.memberCount").value(2));
 
-        // Bee logs 60 minutes: 6 minute points + 20 for hitting the 30-minute weekly goal = 26
+        // Bee logs 60 of 120 minutes = 50% of the weekly goal = 50 points
         mvc.perform(post("/logs").header("Authorization", bearer(bee))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json.writeValueAsString(Map.of("leagueId", leagueId, "minutes", 60))))
@@ -99,13 +98,14 @@ class ApiFlowIntegrationTest {
         mvc.perform(get("/leagues/" + leagueId + "/leaderboard?period=weekly").header("Authorization", bearer(owner)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].displayName").value("bee"))
-                .andExpect(jsonPath("$[0].points").value(26))
+                .andExpect(jsonPath("$[0].points").value(50))
                 .andExpect(jsonPath("$[0].rank").value(1))
                 .andExpect(jsonPath("$[1].points").value(0));
 
         mvc.perform(get("/leagues/" + leagueId + "/overview").header("Authorization", bearer(owner)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.membersHitWeeklyGoal").value(1))
+                .andExpect(jsonPath("$.membersHitWeeklyGoal").value(0))
+                .andExpect(jsonPath("$.weeklyLeaderboard[0].points").value(50))
                 .andExpect(jsonPath("$.memberCount").value(2));
     }
 }

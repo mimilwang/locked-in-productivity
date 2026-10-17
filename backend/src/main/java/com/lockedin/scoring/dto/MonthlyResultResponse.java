@@ -3,7 +3,7 @@ package com.lockedin.scoring.dto;
 import java.time.Instant;
 import java.util.List;
 
-/** month is "yyyy-MM". punishment is what the wheel landed on for the Chud. */
+/** month is "yyyy-MM". reward (MVP) and punishment (Chud) are the plain text the league creator wrote. */
 public record MonthlyResultResponse(
         Long leagueId,
         String month,

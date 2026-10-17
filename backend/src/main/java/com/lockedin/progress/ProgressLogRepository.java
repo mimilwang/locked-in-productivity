@@ -1,5 +1,6 @@
 package com.lockedin.progress;
 
+import com.lockedin.league.GoalType;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -20,7 +21,15 @@ public interface ProgressLogRepository extends JpaRepository<ProgressLog, Long> 
     @Query("select p from ProgressLog p where p.leagueId = :leagueId and p.endedAt is not null")
     List<ProgressLog> findCompletedByLeagueId(@Param("leagueId") Long leagueId);
 
-    /** Every day the user logged real progress, across all leagues. Used for profile streaks. */
-    @Query("select distinct p.localDate from ProgressLog p where p.userId = :userId and p.durationMinutes > 0")
-    List<LocalDate> findActiveDatesByUserId(@Param("userId") Long userId);
+    /**
+     * Every day the user logged real progress, across all leagues. Used for profile streaks.
+     * Counts any finished log in a TASKS league, and logs with minutes in a TIME league.
+     */
+    @Query("select distinct p.localDate from ProgressLog p, League l where l.id = p.leagueId and p.userId = :userId"
+            + " and p.endedAt is not null and (p.durationMinutes > 0 or l.goalType = :tasks)")
+    List<LocalDate> findActiveDates(@Param("userId") Long userId, @Param("tasks") GoalType tasks);
+
+    default List<LocalDate> findActiveDatesByUserId(Long userId) {
+        return findActiveDates(userId, GoalType.TASKS);
+    }
 }

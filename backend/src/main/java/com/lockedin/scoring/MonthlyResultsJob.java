@@ -9,12 +9,10 @@ import com.lockedin.league.LeagueRepository;
 import com.lockedin.league.LeagueService;
 import com.lockedin.scoring.dto.LeaderboardEntry;
 import com.lockedin.scoring.dto.MonthlyResultResponse;
-import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.List;
-import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +21,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Crowns the MVP (1st place) and Chud of the Month (last place).
+ * Crowns the MVP (1st place) and Chud of the Month (last place) for each calendar month,
+ * by adding up the weekly-progress points everyone earned during that month.
  * Runs automatically just after midnight on the 1st (monthly-results.cron), and can be
  * triggered by hand for the demo with POST /leagues/{id}/monthly/finalize.
  */
@@ -39,7 +38,6 @@ public class MonthlyResultsJob {
     private final ObjectMapper objectMapper;
     private final Clock clock;
     private final ZoneId jobZone;
-    private final Random random = new SecureRandom();
 
     public MonthlyResultsJob(LeagueRepository leagues, LeagueService leagueService, LeaderboardService leaderboardService,
                              MonthlyResultRepository results, ObjectMapper objectMapper, Clock clock,
@@ -85,10 +83,9 @@ public class MonthlyResultsJob {
 
         LeaderboardEntry mvp = standings.get(0);
         LeaderboardEntry chud = standings.get(standings.size() - 1);
-        String punishment = spinWheel(league);
 
         MonthlyResult result = existing != null ? existing : new MonthlyResult(leagueId, month.toString());
-        result.update(mvp.userId(), chud.userId(), punishment, toJson(standings), clock.instant());
+        result.update(mvp.userId(), chud.userId(), toJson(standings), clock.instant());
         return toResponse(results.save(result));
     }
 
@@ -104,21 +101,13 @@ public class MonthlyResultsJob {
         return results.findByLeagueIdOrderByMonthDesc(leagueId).stream().map(this::toResponse).toList();
     }
 
-    private String spinWheel(League league) {
-        List<String> options = league.getWheelOptions();
-        if (options == null || options.isEmpty()) {
-            return league.getPunishment();
-        }
-        return options.get(random.nextInt(options.size()));
-    }
-
     private MonthlyResultResponse toResponse(MonthlyResult r) {
         League league = leagueService.getLeague(r.getLeagueId());
         List<LeaderboardEntry> standings = fromJson(r.getStandingsJson());
         LeaderboardEntry mvp = standings.stream().filter(e -> e.userId().equals(r.getMvpUserId())).findFirst().orElse(null);
         LeaderboardEntry chud = standings.stream().filter(e -> e.userId().equals(r.getChudUserId())).findFirst().orElse(null);
         return new MonthlyResultResponse(r.getLeagueId(), r.getMonth(), mvp, chud, league.getReward(),
-                r.getPunishment(), standings, r.getFinalizedAt());
+                league.getPunishment(), standings, r.getFinalizedAt());
     }
 
     private String toJson(List<LeaderboardEntry> standings) {

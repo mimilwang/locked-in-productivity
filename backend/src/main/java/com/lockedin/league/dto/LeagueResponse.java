@@ -4,7 +4,6 @@ import com.lockedin.league.GoalType;
 import com.lockedin.league.League;
 import com.lockedin.league.MemberRole;
 import java.time.LocalDate;
-import java.util.List;
 
 /**
  * readyToStart is true once the league has the minimum 4 members.
@@ -22,7 +21,6 @@ public record LeagueResponse(
         String photoUrl,
         String reward,
         String punishment,
-        List<String> wheelOptions,
         Long creatorId,
         int memberCount,
         boolean readyToStart,
@@ -32,7 +30,7 @@ public record LeagueResponse(
         return new LeagueResponse(
                 l.getId(), l.getName(), l.getGoalDescription(), l.getGoalType(), l.getWeeklyTarget(),
                 l.getStartDate(), l.getEndDate(), l.getInviteCode(), l.getPhotoUrl(), l.getReward(),
-                l.getPunishment(), List.copyOf(l.getWheelOptions()), l.getCreatorId(), memberCount,
+                l.getPunishment(), l.getCreatorId(), memberCount,
                 memberCount >= minMembers, myRole);
     }
 }

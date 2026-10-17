@@ -40,7 +40,7 @@ Show `message` to the user.
 | POST | `/friends/requests/{id}/accept` · `/decline` | Answer a request |
 | POST | `/images` | Upload a photo (form field `file`), returns `{ "url": "/images/..." }` |
 | GET | `/images/{filename}` | View a photo (public) |
-| POST | `/leagues` | Create a league (you become owner) |
+| POST | `/leagues` | Create a league: name, goalDescription, goalType (TIME/TASKS), weeklyTarget, reward, punishment |
 | GET | `/leagues` | Leagues you're in |
 | GET | `/leagues/{id}` | One league |
 | GET | `/leagues/invite/{code}` | Preview a league from its invite code (join page) |
@@ -49,38 +49,46 @@ Show `message` to the user.
 | POST | `/logs/start` | Start the timer (`leagueId`) |
 | POST | `/logs/{id}/stop` | Stop the timer |
 | GET | `/logs/running` | Your running timer (204 if none) |
-| POST | `/logs` | Log minutes by hand (`leagueId`, `minutes`, optional `date`) |
+| POST | `/logs` | Log by hand: `leagueId`, `minutes` (required for TIME goals), optional `date`. In TASKS leagues each log = 1 task |
 | DELETE | `/logs/{id}` | Delete one of your logs |
 | GET | `/leagues/{id}/logs` | Logs in a league (`?userId=` optional) |
 | GET | `/leagues/{id}/leaderboard?period=daily\|weekly\|monthly\|total` | Rankings |
 | GET | `/leagues/{id}/overview` | Overview page: today's leader, weekly stats, group goal progress |
 | GET | `/leagues/{id}/scores` | Point-by-point breakdown (`?userId=` optional) |
 | GET | `/leagues/{id}/monthly` | Past monthly results |
-| GET | `/leagues/{id}/monthly/{yyyy-MM}` | One month's MVP, Chud, standings, wheel result |
+| GET | `/leagues/{id}/monthly/{yyyy-MM}` | One month's MVP, Chud, standings, reward and punishment |
 | POST | `/leagues/{id}/monthly/finalize` | **Demo:** crown MVP + Chud right now (owner only) |
 | GET | `/health` | Is the backend up? |
 
 Swagger has the full request and response shapes for each one.
 
 ## Scoring
-All numbers live in `src/main/resources/application.yml` under `scoring:`. Change them there, not in Java.
+Each league has **one weekly goal**, and every member has to hit it on their own.
+Example: "5 hours of leetcode a week" means Renee needs 5 hours, Jake needs 5 hours, and so on.
 
-| Points | Rule |
+- `goalType: TIME` means `weeklyTarget` is in minutes (5 hours = `300`). Each log adds its minutes,
+  from the timer or typed in by hand. The frontend turns hours into minutes.
+- `goalType: TASKS` means `weeklyTarget` is a number of tasks. Every log counts as 1 task.
+
+| Rule | |
 |---|---|
-| Minutes | 1 point per 10 minutes logged that day, max 30 per day |
-| Streak | From day 2 of a streak: streak length × 2, max 10 per day |
-| Weekly goal | +20 on the day your weekly total reaches the league's target (once per week) |
-| Group bonus | +5 to everyone, once per week, when **every** member hits the target |
+| Weekly points | % of the weekly goal done, **rounded down**. 50% = 50 points, 100% = 100 points |
+| Cap | Max **100 points per week**. Going over the goal doesn't add more |
+| Updates daily | Points are saved on the day you earn them. Going from 40% to 65% on Wednesday = +25 on Wednesday |
+| Daily leaderboard | Points gained today, ranked |
+| Weekly leaderboard | This week's points (0-100), ranked |
+| Monthly MVP / Chud | Most / fewest points earned during the calendar month. Picked automatically at 12:05am on the 1st |
+| Streaks | Days in a row with a log. **Display only**, no points |
 
 - Weeks start on Monday (`week-starts-on`).
 - A log counts for the day it **started**, in the user's own time zone.
-- Timers stop counting at 240 minutes (`max-log-minutes`).
-- Leaderboard ties: more points, then more minutes, then longer streak, then who joined first.
-- MVP = 1st place for the month, Chud = last place. The punishment wheel picks one of the league's `wheelOptions`.
-  This runs automatically at 12:05am on the 1st (`monthly-results.cron`).
+- A single log / timer counts up to 240 minutes (`max-log-minutes`).
+- Leaderboard ties: more points, then more progress (minutes or tasks), then longer streak, then who joined first.
+- `reward` and `punishment` are plain text the league creator writes. Monthly results return both, for the
+  frontend to display.
 
-**To add a new way to earn points:** add a value to `ScoreReason`, a number to `ScoringRules` + `application.yml`,
-the logic in `ScoringEngine`, and a test in `ScoringEngineTest`.
+The numbers live in `application.yml` under `scoring:`, and the logic in `scoring/ScoringEngine.java`
+(tested in `ScoringEngineTest`).
 
 ## Packages
 | Package | What's in it |
@@ -91,7 +99,7 @@ the logic in `ScoringEngine`, and a test in `ScoringEngineTest`.
 | `account/images/` | Profile + league photo uploads (saved to `uploads/`) |
 | `league/` | Leagues, memberships, invite codes, join rules |
 | `progress/` | Timer + manual progress logs |
-| `scoring/` | Points engine, streaks, leaderboards, monthly MVP/Chud |
+| `scoring/` | Weekly-goal points, streaks, leaderboards, monthly MVP/Chud |
 | `common/` | Errors, time zone utils, CORS, current user, Swagger setup, demo data |
 
 Each feature follows Controller (URLs) → Service (rules) → Repository (database) → Entity (table), with DTOs for JSON.
