@@ -148,7 +148,7 @@ export default function DailyChallengesPage() {
   return (
     <main className="daily-challenges">
       <div className="daily-challenges__shell">
-        <a href="/" className="daily-challenges__logo" aria-label="Locked In home">
+        <a href="/overview" className="daily-challenges__logo" aria-label="Locked In overview">
           <span className="daily-challenges__logo-mark">L</span>
           <span>LOCKED IN</span>
         </a>
