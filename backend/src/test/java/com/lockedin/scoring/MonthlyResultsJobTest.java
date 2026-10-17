@@ -14,6 +14,7 @@ import com.lockedin.league.dto.LeagueResponse;
 import com.lockedin.progress.ProgressService;
 import com.lockedin.progress.dto.ManualLogRequest;
 import com.lockedin.scoring.dto.MonthlyResultResponse;
+import com.lockedin.scoring.dto.Standing;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,6 +71,9 @@ class MonthlyResultsJobTest {
         assertEquals(loser, result.chud().userId());
         assertEquals(3, result.standings().size());
         assertEquals(12, result.mvp().points());
+        assertEquals(Standing.LEADER, result.mvp().standing());
+        assertEquals(Standing.CHUD_ZONE, result.chud().standing());
+        assertEquals(Standing.NONE, result.standings().get(1).standing());
         assertEquals(1, result.chud().points());
         assertEquals("Free dinner", result.reward());
         assertEquals("Do a dare", result.punishment());

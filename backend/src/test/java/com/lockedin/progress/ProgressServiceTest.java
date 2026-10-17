@@ -58,6 +58,17 @@ class ProgressServiceTest {
     }
 
     @Test
+    void todayTabShowsPointsGainedTodayAndWeeklyPercent() {
+        progress.logManually(me, new ManualLogRequest(leagueId, 60, null, null));
+        progress.logManually(me, new ManualLogRequest(leagueId, 30, null, null));
+        var today = leaderboards.leaderboard(me, leagueId, LeaderboardPeriod.DAILY).get(0);
+        assertEquals(30, today.points());        // 90 of 300 minutes, all logged today
+        assertEquals(30, today.weeklyPercent());
+        assertEquals(90, today.minutes());
+        assertEquals(2, today.tasks());
+    }
+
+    @Test
     void timeGoalsNeedMinutes() {
         ApiException e = assertThrows(ApiException.class,
                 () -> progress.logManually(me, new ManualLogRequest(leagueId, null, null, null)));

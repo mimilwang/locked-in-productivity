@@ -100,7 +100,22 @@ class ApiFlowIntegrationTest {
                 .andExpect(jsonPath("$[0].displayName").value("bee"))
                 .andExpect(jsonPath("$[0].points").value(50))
                 .andExpect(jsonPath("$[0].rank").value(1))
-                .andExpect(jsonPath("$[1].points").value(0));
+                .andExpect(jsonPath("$[0].weeklyPercent").value(50))
+                .andExpect(jsonPath("$[0].standing").value("LEADER"))
+                .andExpect(jsonPath("$[1].points").value(0))
+                .andExpect(jsonPath("$[1].standing").value("CHUD_ZONE"));
+
+        // Today tab: points gained today, plus this week's %
+        mvc.perform(get("/leagues/" + leagueId + "/leaderboard?period=daily").header("Authorization", bearer(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].points").value(50))
+                .andExpect(jsonPath("$[0].weeklyPercent").value(50));
+
+        // Monthly tab: race for MVP
+        mvc.perform(get("/leagues/" + leagueId + "/leaderboard?period=monthly").header("Authorization", bearer(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].displayName").value("bee"))
+                .andExpect(jsonPath("$[0].standing").value("LEADER"));
 
         mvc.perform(get("/leagues/" + leagueId + "/overview").header("Authorization", bearer(owner)))
                 .andExpect(status().isOk())

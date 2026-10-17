@@ -27,7 +27,8 @@ public class LeaderboardController {
     }
 
     @GetMapping("/leaderboard")
-    @Operation(summary = "Rankings. period = daily | weekly (default) | monthly | total")
+    @Operation(summary = "Rankings. period = daily (points gained today) | weekly (0-100, default) | "
+            + "monthly (points this month: the race for MVP) | total. Each row has weeklyPercent and standing.")
     public List<LeaderboardEntry> leaderboard(@PathVariable Long leagueId,
                                               @RequestParam(defaultValue = "weekly") String period) {
         return leaderboardService.leaderboard(currentUser.id(), leagueId, LeaderboardPeriod.parse(period));

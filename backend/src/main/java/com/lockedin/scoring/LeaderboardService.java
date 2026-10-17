@@ -12,6 +12,7 @@ import com.lockedin.progress.ProgressLogRepository;
 import com.lockedin.scoring.dto.LeaderboardEntry;
 import com.lockedin.scoring.dto.LeagueOverview;
 import com.lockedin.scoring.dto.ScoreEventResponse;
+import com.lockedin.scoring.dto.Standing;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -113,6 +114,13 @@ public class LeaderboardService {
             points.merge(e.getUserId(), e.getPoints(), Integer::sum);
         }
 
+        // This week's progress (0-100) as of asOf, shown next to every period's points.
+        LocalDate weekStart = TimeUtils.weekStart(asOf, rules.weekStartsOn());
+        Map<Long, Integer> weeklyPercent = new HashMap<>();
+        for (ScoreEvent e : scoreEvents.findByLeagueIdAndDateBetween(league.getId(), weekStart, weekStart.plusDays(6))) {
+            weeklyPercent.merge(e.getUserId(), e.getPoints(), Integer::sum);
+        }
+
         Map<Long, Integer> minutes = new HashMap<>();
         Map<Long, Integer> tasks = new HashMap<>();
         Map<Long, Set<LocalDate>> activeDays = new HashMap<>();
@@ -151,10 +159,23 @@ public class LeaderboardService {
         List<LeaderboardEntry> result = new ArrayList<>();
         for (int i = 0; i < rows.size(); i++) {
             Row r = rows.get(i);
+            int percent = Math.min(weeklyPercent.getOrDefault(r.user().getId(), 0), rules.maxWeeklyPoints());
             result.add(new LeaderboardEntry(i + 1, r.user().getId(), r.user().getDisplayName(),
-                    LeagueService.avatarFor(r.member(), r.user()), r.points(), r.minutes(), r.tasks(), r.streak()));
+                    LeagueService.avatarFor(r.member(), r.user()), r.points(), percent, r.minutes(), r.tasks(),
+                    r.streak(), standingFor(i, rows.size())));
         }
         return result;
+    }
+
+    /** 1st place = LEADER, last place = CHUD_ZONE (only with 2+ members). */
+    private static Standing standingFor(int index, int size) {
+        if (size < 2) {
+            return Standing.NONE;
+        }
+        if (index == 0) {
+            return Standing.LEADER;
+        }
+        return index == size - 1 ? Standing.CHUD_ZONE : Standing.NONE;
     }
 
     private LocalDate[] rangeFor(LeaderboardPeriod period, LocalDate today, League league) {

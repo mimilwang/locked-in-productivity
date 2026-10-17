@@ -75,8 +75,10 @@ Example: "5 hours of leetcode a week" means Renee needs 5 hours, Jake needs 5 ho
 | Weekly points | % of the weekly goal done, **rounded down**. 50% = 50 points, 100% = 100 points |
 | Cap | Max **100 points per week**. Going over the goal doesn't add more |
 | Updates daily | Points are saved on the day you earn them. Going from 40% to 65% on Wednesday = +25 on Wednesday |
-| Daily leaderboard | Points gained today, ranked |
-| Weekly leaderboard | This week's points (0-100), ranked |
+| Today tab (`period=daily`) | Points gained today, ranked. Each row also has `weeklyPercent` (e.g. "+25 today, 65% of goal") |
+| Weekly (`period=weekly`) | This week's points (0-100), ranked |
+| Monthly tab (`period=monthly`) | Points earned this calendar month: the race for MVP |
+| `standing` | Every row: `LEADER` (1st), `CHUD_ZONE` (last) or `NONE`, so the frontend can highlight the MVP race and Chud territory |
 | Monthly MVP / Chud | Most / fewest points earned during the calendar month. Picked automatically at 12:05am on the 1st |
 | Streaks | Days in a row with a log. **Display only**, no points |
 
