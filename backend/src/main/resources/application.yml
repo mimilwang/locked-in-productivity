@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: locked-in
+  datasource:
+    url: jdbc:h2:mem:lockedin;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  h2:
+    console:
+      enabled: true
+
+server:
+  port: 8080
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+# All scoring numbers live here. Change them in one place.
+# PLACEHOLDER values -- update once the team agrees on scoring.
+scoring:
+  minutes-per-point: 10
+  daily-point-cap: 30
+  weekly-goal-bonus: 20
+  streak-bonus-per-day: 2
+  streak-bonus-cap: 10
+  group-goal-bonus: 5
+  max-log-minutes: 240
+  week-starts-on: MONDAY
