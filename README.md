@@ -6,7 +6,7 @@ Locked In turns self-improvement into friendly competition. Create a private lea
 
 ## Why
 
-College students know what they should be doing — studying, working out, sleeping better — but solo habit apps make it easy to quit with no one noticing. Locked In adds peer accountability, collaborative goals, and light competition so building habits feels social, not solitary.
+We know what we should be doing — studying, working out, sleeping better — but solo habit apps make it easy to quit with no one noticing. Locked In adds peer accountability, collaborative goals, and light competition so building habits feels social, not solitary.
 
 ## How it works
 
