@@ -7,7 +7,7 @@
 - [ ] **VS Code** or **IntelliJ IDEA**
 - [ ] **Postman** or **Insomnia** (optional; Swagger UI also works for testing the API)
 
-## Backend (Renee, Shreya)
+## Backend (Renee)
 - [ ] **Java 21 JDK**: Eclipse Temurin 21, https://adoptium.net (Mac: `brew install --cask temurin@21`)
 - [ ] **Maven**: `brew install maven` (check with `mvn -v`, should show Java 21)
 - [ ] **IntelliJ IDEA Community**: https://www.jetbrains.com/idea/download (best for Spring Boot)

@@ -13,8 +13,20 @@ spring:
     console:
       enabled: true
 
+  servlet:
+    multipart:
+      max-file-size: 5MB
+
 server:
   port: 8080
+
+# Auth: replace the secret with an env variable before deploying (at least 32 characters).
+jwt:
+  secret: ${JWT_SECRET:dev-only-secret-change-me-dev-only-secret}
+  expiration-hours: 24
+
+images:
+  upload-dir: uploads
 
 springdoc:
   swagger-ui:
