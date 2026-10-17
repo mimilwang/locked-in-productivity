@@ -19,6 +19,15 @@ const NAV_ITEMS = [
   'Dare wheel',
 ]
 
+const NAV_ROUTES: Record<string, string> = {
+  Overview: '/overview',
+  'Daily check-in': '/timer',
+  'Live feed': '/feed',
+  Leaderboard: '/leaderboard',
+  'Monthly awards': '/monthly-awards',
+  'Dare wheel': '/daily-challenges',
+}
+
 const REACTION_OPTIONS: ReactionEmoji[] = ['🔥', '👏', '💀', '🔒']
 
 function initials(name: string) {
@@ -192,8 +201,8 @@ export default function LiveFeedPage() {
         </div>
 
         <p className="lf-eyebrow lf-eyebrow--dark">Your clubhouse</p>
-        <a className="lf-nav-link" href="#">
-          Your leagues
+        <a className="lf-nav-link" href="/overview">
+          Your league
         </a>
 
         <p className="lf-eyebrow lf-eyebrow--dark">{FEED_LEAGUE.name}</p>
@@ -201,7 +210,7 @@ export default function LiveFeedPage() {
           {NAV_ITEMS.map((item) => (
             <a
               key={item}
-              href="#"
+              href={NAV_ROUTES[item]}
               className={`lf-nav-link ${item === 'Live feed' ? 'lf-nav-link--active' : ''}`}
               aria-current={item === 'Live feed' ? 'page' : undefined}
             >

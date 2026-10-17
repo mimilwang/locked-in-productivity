@@ -30,6 +30,14 @@ const MEMBERS: Member[] = [
 
 const NAV_ITEMS = ['Overview', 'Daily check-in', 'Leaderboard', 'Monthly awards', 'Dare wheel']
 
+const NAV_ROUTES: Record<string, string> = {
+  Overview: '/overview',
+  'Daily check-in': '/timer',
+  Leaderboard: '/leaderboard',
+  'Monthly awards': '/monthly-awards',
+  'Dare wheel': '/daily-challenges',
+}
+
 // ---------- Helpers ----------
 
 function initials(name: string) {
@@ -82,8 +90,8 @@ export default function Leaderboard() {
         </div>
 
         <p className="lb-eyebrow lb-eyebrow--dark">Your clubhouse</p>
-        <a className="lb-nav-link" href="#">
-          Your leagues
+        <a className="lb-nav-link" href="/overview">
+          Your league
         </a>
 
         <p className="lb-eyebrow lb-eyebrow--dark">{LEAGUE.name}</p>
@@ -91,7 +99,7 @@ export default function Leaderboard() {
           {NAV_ITEMS.map((item) => (
             <a
               key={item}
-              href="#"
+              href={NAV_ROUTES[item]}
               className={`lb-nav-link ${item === 'Leaderboard' ? 'lb-nav-link--active' : ''}`}
               aria-current={item === 'Leaderboard' ? 'page' : undefined}
             >
