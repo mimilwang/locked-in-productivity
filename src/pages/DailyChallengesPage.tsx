@@ -94,7 +94,7 @@ function ChallengeCard({
             className="btn btn--primary"
             onClick={() => onComplete(note.trim())}
           >
-            Mark complete
+            Mark complete <span aria-hidden="true">→</span>
           </button>
         </div>
       )}
@@ -146,67 +146,75 @@ export default function DailyChallengesPage() {
   }
 
   return (
-    <div className="daily-challenges">
-      <header className="daily-challenges__hero">
-        <p className="daily-challenges__brand">Locked In</p>
-        <h1 className="daily-challenges__title">Daily Challenges</h1>
-        <p className="daily-challenges__subtitle">
-          Two ways to boost your score today — one casual, one all-in. Build
-          community and wellbeing beyond your league goal.
-        </p>
-        <div className="daily-challenges__stats">
-          <div>
-            <span className="daily-challenges__stat-label">League</span>
-            <span className="daily-challenges__stat-value">
-              {DEMO_LEAGUE.name}
-            </span>
-          </div>
-          <div>
-            <span className="daily-challenges__stat-label">Today</span>
-            <span className="daily-challenges__stat-value">
-              {formatDisplayDate(pair.dateKey)}
-            </span>
-          </div>
-          <div>
-            <span className="daily-challenges__stat-label">Resets in</span>
-            <span className="daily-challenges__stat-value daily-challenges__countdown">
-              {countdown}
-            </span>
-          </div>
-        </div>
-      </header>
+    <main className="daily-challenges">
+      <div className="daily-challenges__shell">
+        <a href="/" className="daily-challenges__logo" aria-label="Locked In home">
+          <span className="daily-challenges__logo-mark">L</span>
+          <span>LOCKED IN</span>
+        </a>
 
-      <section className="daily-challenges__progress" aria-live="polite">
-        <p>
-          <strong>{completedCount}/2</strong> challenges logged ·{' '}
-          <strong>+{pointsToday}</strong> pts today
-        </p>
-      </section>
+        <header className="daily-challenges__hero">
+          <p className="daily-challenges__step">DAILY BOOST · TODAY</p>
+          <h1 className="daily-challenges__title">Daily challenges</h1>
+          <p className="daily-challenges__subtitle">
+            Two ways to boost your score today — one casual, one all-in. Build
+            community and wellbeing beyond your league goal.
+          </p>
 
-      <section
-        className="daily-challenges__grid"
-        aria-label="Today's challenges"
-      >
-        <ChallengeCard
-          challenge={pair.fun}
-          completed={funDone}
-          onComplete={(note) => completeChallenge(pair.fun.id, note)}
-          onUndo={() => undoChallenge(pair.fun.id)}
-        />
-        <ChallengeCard
-          challenge={pair.party}
-          completed={partyDone}
-          onComplete={(note) => completeChallenge(pair.party.id, note)}
-          onUndo={() => undoChallenge(pair.party.id)}
-        />
-      </section>
+          <div className="daily-challenges__stats">
+            <div>
+              <span className="daily-challenges__stat-label">League</span>
+              <span className="daily-challenges__stat-value">
+                {DEMO_LEAGUE.name}
+              </span>
+            </div>
+            <div>
+              <span className="daily-challenges__stat-label">Today</span>
+              <span className="daily-challenges__stat-value">
+                {formatDisplayDate(pair.dateKey)}
+              </span>
+            </div>
+            <div>
+              <span className="daily-challenges__stat-label">Resets in</span>
+              <span className="daily-challenges__stat-value daily-challenges__countdown">
+                {countdown}
+              </span>
+            </div>
+          </div>
+        </header>
 
-      <footer className="daily-challenges__footer">
-        <p>
-          Challenges rotate at midnight. Completions are self-reported for the
-          MVP — keep it honest for the leaderboard.
-        </p>
-      </footer>
-    </div>
+        <section className="daily-challenges__progress" aria-live="polite">
+          <p>
+            <strong>{completedCount}/2</strong> challenges logged ·{' '}
+            <strong>+{pointsToday}</strong> pts today
+          </p>
+        </section>
+
+        <section
+          className="daily-challenges__grid"
+          aria-label="Today's challenges"
+        >
+          <ChallengeCard
+            challenge={pair.fun}
+            completed={funDone}
+            onComplete={(note) => completeChallenge(pair.fun.id, note)}
+            onUndo={() => undoChallenge(pair.fun.id)}
+          />
+          <ChallengeCard
+            challenge={pair.party}
+            completed={partyDone}
+            onComplete={(note) => completeChallenge(pair.party.id, note)}
+            onUndo={() => undoChallenge(pair.party.id)}
+          />
+        </section>
+
+        <footer className="daily-challenges__footer">
+          <p>
+            Challenges rotate at midnight. Completions are self-reported for the
+            MVP — keep it honest for the leaderboard.
+          </p>
+        </footer>
+      </div>
+    </main>
   )
 }
