@@ -1,6 +1,13 @@
 import type { ApiErrorBody } from '../types/api'
 
-const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? 'http://localhost:8080'
+const configuredApiUrl = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '')
+
+// On a phone, "localhost" means the phone itself. During local development use the
+// hostname that served the frontend so phones on the same network reach the same backend.
+// Production defaults to same-origin, which works with the usual reverse-proxy setup.
+export const API_URL = configuredApiUrl || (import.meta.env.DEV
+  ? `${window.location.protocol}//${window.location.hostname}:8080`
+  : window.location.origin)
 const TOKEN_KEY = 'locked-in:auth-token'
 
 export class ApiError extends Error {
