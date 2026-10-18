@@ -638,10 +638,13 @@
     padding-right: 18px;
   }
 
-  .lf-card__detail,
   .lf-card__photo,
   .lf-reactions {
     margin-left: 0;
+  }
+
+  .lf-card__detail {
+    margin-left: 54px;
   }
 
   .lf-replies {
