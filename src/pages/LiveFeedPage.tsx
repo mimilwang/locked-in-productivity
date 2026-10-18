@@ -64,11 +64,11 @@ function ActivityCard({
 
   return (
     <article className="lf-card">
-      <header className="lf-card__header">
-        <div className="lf-avatar" aria-hidden>
-          {activity.actor.avatarUrl ? <img src={imageSrc(activity.actor.avatarUrl)} alt="" /> : initials(actorName)}
-        </div>
-        <div className="lf-card__meta">
+      <div className="lf-avatar" aria-hidden>
+        {activity.actor.avatarUrl ? <img src={imageSrc(activity.actor.avatarUrl)} alt="" /> : initials(actorName)}
+      </div>
+      <div className="lf-card__content">
+        <header className="lf-card__header">
           <p className="lf-card__who">
             <strong>{actorName}</strong> {activity.headline}
           </p>
@@ -85,40 +85,39 @@ function ActivityCard({
               </>
             ) : null}
           </p>
+        </header>
+
+        {activity.detail ? (
+          <p className="lf-card__detail">{activity.detail}</p>
+        ) : null}
+
+        {activity.imageUrl ? (
+          <div className="lf-card__photo">
+            <img src={imageSrc(activity.imageUrl)} alt="" />
+          </div>
+        ) : null}
+
+        <div className="lf-reactions" role="group" aria-label="Reactions">
+          {REACTION_OPTIONS.map((emoji) => {
+            const bucket = activity.reactions.find((r) => r.emoji === emoji)
+            const count = bucket?.userIds.length ?? 0
+            const active = myReaction === emoji
+            return (
+              <button
+                key={emoji}
+                type="button"
+                className={`lf-reaction ${active ? 'lf-reaction--active' : ''}`}
+                aria-pressed={active}
+                onClick={() => void onReact(activity.id, emoji)}
+              >
+                <span aria-hidden>{emoji}</span>
+                {count > 0 ? <span>{count}</span> : null}
+              </button>
+            )
+          })}
         </div>
-      </header>
 
-      {activity.detail ? (
-        <p className="lf-card__detail">{activity.detail}</p>
-      ) : null}
-
-      {activity.imageUrl ? (
-        <div className="lf-card__photo">
-          <img src={imageSrc(activity.imageUrl)} alt="" />
-        </div>
-      ) : null}
-
-      <div className="lf-reactions" role="group" aria-label="Reactions">
-        {REACTION_OPTIONS.map((emoji) => {
-          const bucket = activity.reactions.find((r) => r.emoji === emoji)
-          const count = bucket?.userIds.length ?? 0
-          const active = myReaction === emoji
-          return (
-            <button
-              key={emoji}
-              type="button"
-              className={`lf-reaction ${active ? 'lf-reaction--active' : ''}`}
-              aria-pressed={active}
-              onClick={() => void onReact(activity.id, emoji)}
-            >
-              <span aria-hidden>{emoji}</span>
-              {count > 0 ? <span>{count}</span> : null}
-            </button>
-          )
-        })}
-      </div>
-
-      <div className="lf-replies">
+        <div className="lf-replies">
         {(activity.replies ?? []).map((item) => (
           <div className="lf-reply" key={item.id}>
             <span className="lf-reply__avatar" aria-hidden>{item.actor.avatarUrl ? <img src={imageSrc(item.actor.avatarUrl)} alt="" /> : initials(item.actor.name)}</span>
@@ -139,6 +138,7 @@ function ActivityCard({
           <input value={reply} onChange={(event) => setReply(event.target.value)} maxLength={280} placeholder="Write a reply…" aria-label="Write a reply" />
           <button type="submit" disabled={!reply.trim() || replying}>{replying ? 'Sending…' : 'Reply'}</button>
         </form>
+        </div>
       </div>
     </article>
   )

@@ -400,6 +400,10 @@
 
 .lf-card {
   padding: 16px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: start;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--card);
@@ -428,11 +432,10 @@
 }
 
 .lf-card__header {
-  display: flex;
-  gap: 12px;
+  display: block;
 }
 
-.lf-card__meta {
+.lf-card__content {
   min-width: 0;
 }
 
@@ -474,13 +477,13 @@
 }
 
 .lf-card__detail {
-  margin: 22px 0 0 54px;
+  margin: 22px 0 0;
   color: var(--muted);
   line-height: 1.5;
 }
 
 .lf-card__photo {
-  margin: 12px 0 0 54px;
+  margin: 12px 0 0;
   border-radius: 10px;
   overflow: hidden;
   border: 1px solid var(--border);
@@ -495,7 +498,7 @@
 }
 
 .lf-reactions {
-  margin: 14px 0 0 54px;
+  margin: 14px 0 0;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -532,7 +535,7 @@
 }
 
 .lf-replies {
-  margin: 14px 0 0 54px;
+  margin: 14px 0 0;
   padding-top: 12px;
   border-top: 1px solid var(--border);
 }
@@ -636,19 +639,6 @@
   .lf-footer {
     padding-left: 18px;
     padding-right: 18px;
-  }
-
-  .lf-card__photo,
-  .lf-reactions {
-    margin-left: 0;
-  }
-
-  .lf-card__detail {
-    margin-left: 54px;
-  }
-
-  .lf-replies {
-    margin-left: 0;
   }
 
   .lf-submit {
