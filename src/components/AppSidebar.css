@@ -56,10 +56,7 @@
 .app-sidebar .app-sidebar__link:hover { background: #20362b; color: #fff; }
 .app-sidebar .app-sidebar__link--active { background: #baff43; color: #13271d; font-weight: 800; }
 .app-sidebar .app-sidebar__link--active:hover { background: #baff43; color: #13271d; }
-.app-sidebar .app-sidebar__note { width: 100%; margin: auto 0 0; padding: 16px; border: 1px solid #405247; border-radius: 6px; }
-.app-sidebar .app-sidebar__note strong { margin: 0; color: #baff43; font-size: 9px; line-height: 11px; letter-spacing: .07em; }
-.app-sidebar .app-sidebar__note p { margin: 7px 0 0; color: #aebbb1; font-size: 11px; font-weight: 400; line-height: 16px; }
-.app-sidebar .app-sidebar__profile { width: 100%; margin: 25px 0 0; display: flex; align-items: center; gap: 10px; color: #eef3ef; font-size: 11px; line-height: 13px; text-decoration: none; }
+.app-sidebar .app-sidebar__profile { width: 100%; margin: auto 0 0; display: flex; align-items: center; gap: 10px; color: #eef3ef; font-size: 11px; line-height: 13px; text-decoration: none; }
 .app-sidebar .app-sidebar__profile strong { font-size: 11px; line-height: 13px; }
 .app-sidebar .app-sidebar__profile:hover strong { color: #baff43; }
 .app-sidebar .app-sidebar__avatar { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; border-radius: 50%; background: #baff43; color: #17231b; font-size: 9px; line-height: 1; }
@@ -86,7 +83,7 @@
   .app-sidebar { width: 72px !important; min-width: 72px !important; max-width: 72px !important; padding: 24px 10px; align-items: center; }
   .app-sidebar__brand { font-size: 0; }
   .app-sidebar__brand span { font-size: 28px; }
-  .app-sidebar__label, .app-sidebar__note, .app-sidebar__profile > span:last-child { display: none; }
+  .app-sidebar__label, .app-sidebar__profile > span:last-child { display: none; }
   .app-sidebar__nav { width: 100%; margin-top: 38px; }
   .app-sidebar__link { justify-content: center; font-size: 0; }
   .app-sidebar__link > span { font-size: 17px; }
@@ -101,5 +98,5 @@
   .cl-page { display: block !important; }
   .app-sidebar { position: static; width: 100% !important; min-width: 100% !important; max-width: 100% !important; height: auto; padding: 14px 18px; flex-direction: row; justify-content: space-between; }
   .app-sidebar__brand { font-size: 18px; }
-  .app-sidebar__nav, .app-sidebar__note, .app-sidebar__profile { display: none; }
+  .app-sidebar__nav, .app-sidebar__profile { display: none; }
 }

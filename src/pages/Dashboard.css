@@ -117,7 +117,11 @@
   align-items: center;
   gap: 10px;
   border-top: 1px solid var(--green-700);
+  color: inherit;
+  text-decoration: none;
 }
+
+.db-sidebar-user:hover .db-user-name { color: var(--lime); }
 
 .db-user-name {
   font-size: 12px;
@@ -186,6 +190,7 @@
   flex: 1;
   width: 100%;
   max-width: 1100px;
+  margin: 0 auto;
   padding: 32px;
   display: flex;
   flex-direction: column;
@@ -211,6 +216,15 @@
 
 .db-subtitle {
   color: var(--muted);
+}
+
+.db-error {
+  padding: 12px 14px;
+  border: 1px solid #e7b8ad;
+  border-radius: 7px;
+  background: #fff0ed;
+  color: #8d2e21;
+  font-size: 12px;
 }
 
 .db-page .db-card-title {
@@ -252,6 +266,11 @@
 
 .db-btn--ghost:hover {
   border-color: var(--green-700);
+}
+
+.db-btn:disabled {
+  opacity: .55;
+  cursor: default;
 }
 
 .db-btn:focus-visible,
@@ -562,6 +581,14 @@
   background: var(--lime);
 }
 
+.db-avatar img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
 .db-leader {
   font-size: 11px;
   color: var(--muted);
@@ -661,6 +688,12 @@
 
   .db-join input {
     flex: 1;
+  }
+}
+
+@media (max-width: 580px) {
+  .db-page {
+    flex-direction: column;
   }
 }
 

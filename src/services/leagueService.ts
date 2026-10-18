@@ -49,6 +49,27 @@ export type LeagueOverviewData = {
   daysLeft: number
 }
 
+export type LeagueMember = {
+  userId: number
+  displayName: string
+  avatarUrl: string | null
+  role: 'OWNER' | 'MEMBER'
+  joinedAt: string
+}
+
+export type ProgressLog = {
+  id: number
+  userId: number
+  leagueId: number
+  startedAt: string
+  endedAt: string | null
+  durationMinutes: number
+  source: 'TIMER' | 'MANUAL'
+  localDate: string
+  note: string | null
+  running: boolean
+}
+
 const ACTIVE_LEAGUE_KEY = 'locked-in:active-league-id'
 const ACTIVE_LEAGUE_DATA_KEY = 'locked-in:active-league'
 
@@ -113,4 +134,13 @@ export async function joinLeague(inviteCode: string) {
 
 export function getLeagueOverview(leagueId: number) {
   return apiRequest<LeagueOverviewData>(`/leagues/${leagueId}/overview`)
+}
+
+export function getLeagueMembers(leagueId: number) {
+  return apiRequest<LeagueMember[]>(`/leagues/${leagueId}/members`)
+}
+
+export function getLeagueLogs(leagueId: number, userId?: number) {
+  const query = userId ? `?userId=${userId}` : ''
+  return apiRequest<ProgressLog[]>(`/leagues/${leagueId}/logs${query}`)
 }
