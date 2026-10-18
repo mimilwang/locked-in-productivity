@@ -112,12 +112,13 @@ Each feature follows Controller (URLs) → Service (rules) → Repository (datab
   because leagues have at most 15 people.
 
 ## Deploying
-Set these environment variables:
+For **Render (API) + Vercel (frontend)** see [`../DEPLOY.md`](../DEPLOY.md). Minimum env vars on Render:
 ```
 SPRING_DATASOURCE_URL=jdbc:postgresql://<host>:5432/<db>
 SPRING_DATASOURCE_USERNAME=...
 SPRING_DATASOURCE_PASSWORD=...
 JWT_SECRET=<at least 32 random characters>
 AUTH_DEV_HEADER_ENABLED=false
-APP_CORS_ALLOWED_ORIGINS=https://<your-frontend-url>
+APP_CORS_ALLOWED_ORIGINS=https://<your-vercel-url>
 ```
+On Vercel set `VITE_API_URL=https://<your-render-service>.onrender.com` (build-time). Use Postgres on Render — H2 in-memory and local `uploads/` do not survive Render restarts.
