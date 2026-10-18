@@ -66,7 +66,7 @@ function ActivityCard({
     <article className="lf-card">
       <header className="lf-card__header">
         <div className="lf-avatar" aria-hidden>
-          {initials(actorName)}
+          {activity.actor.avatarUrl ? <img src={imageSrc(activity.actor.avatarUrl)} alt="" /> : initials(actorName)}
         </div>
         <div className="lf-card__meta">
           <p className="lf-card__who">
@@ -121,7 +121,7 @@ function ActivityCard({
       <div className="lf-replies">
         {(activity.replies ?? []).map((item) => (
           <div className="lf-reply" key={item.id}>
-            <span className="lf-reply__avatar" aria-hidden>{initials(item.actor.name)}</span>
+            <span className="lf-reply__avatar" aria-hidden>{item.actor.avatarUrl ? <img src={imageSrc(item.actor.avatarUrl)} alt="" /> : initials(item.actor.name)}</span>
             <p><strong>{item.actor.id === currentUserId ? currentUserName : item.actor.name}</strong> {item.body}<small>{formatRelativeTime(item.createdAt)}</small></p>
           </div>
         ))}
@@ -149,8 +149,8 @@ function logsToActivities(logs: ProgressLog[], members: LeagueMember[], league: 
   return logs
     .filter((log) => !log.running)
     .map((log) => {
-      const actorName =
-        members.find((m) => m.userId === log.userId)?.displayName ?? 'A member'
+      const actor = members.find((m) => m.userId === log.userId)
+      const actorName = actor?.displayName ?? 'A member'
       const buddyName = log.buddyUserId
         ? members.find((m) => m.userId === log.buddyUserId)?.displayName
         : undefined
@@ -162,7 +162,7 @@ function logsToActivities(logs: ProgressLog[], members: LeagueMember[], league: 
           id: `log-${log.id}`,
           leagueId: String(league.id),
           type: 'challenge' as const,
-          actor: { id: String(log.userId), name: actorName },
+          actor: { id: String(log.userId), name: actorName, avatarUrl: actor?.avatarUrl ?? undefined },
           headline: `completed “${title}”`,
           detail: buddyName
             ? `with ${buddyName}`
@@ -178,7 +178,7 @@ function logsToActivities(logs: ProgressLog[], members: LeagueMember[], league: 
         id: `log-${log.id}`,
         leagueId: String(league.id),
         type: 'session' as const,
-        actor: { id: String(log.userId), name: actorName },
+        actor: { id: String(log.userId), name: actorName, avatarUrl: actor?.avatarUrl ?? undefined },
         headline:
           league.goalType === 'TIME'
             ? `logged ${log.durationMinutes} minutes`
@@ -191,12 +191,12 @@ function logsToActivities(logs: ProgressLog[], members: LeagueMember[], league: 
     })
 }
 
-function combineFeed(base: FeedActivity[], state: FeedStateDto, leagueId: number): FeedActivity[] {
+function combineFeed(base: FeedActivity[], state: FeedStateDto, leagueId: number, members: LeagueMember[]): FeedActivity[] {
   const posts: FeedActivity[] = state.posts.map((post) => ({
     id: post.id,
     leagueId: String(leagueId),
     type: 'update',
-    actor: { id: String(post.userId), name: post.displayName },
+    actor: { id: String(post.userId), name: post.displayName, avatarUrl: members.find((member) => member.userId === post.userId)?.avatarUrl ?? undefined },
     headline: 'dropped a league update',
     detail: post.body,
     imageUrl: post.imageUrl ?? undefined,
@@ -214,7 +214,7 @@ function combineFeed(base: FeedActivity[], state: FeedStateDto, leagueId: number
       reactions: [...grouped].map(([emoji, userIds]) => ({ emoji, userIds })),
       replies: state.replies.filter((item) => item.activityId === activity.id).map((item) => ({
         id: String(item.id),
-        actor: { id: String(item.userId), name: item.displayName },
+        actor: { id: String(item.userId), name: item.displayName, avatarUrl: members.find((member) => member.userId === item.userId)?.avatarUrl ?? undefined },
         body: item.body,
         createdAt: item.createdAt,
       })),
@@ -225,7 +225,7 @@ function combineFeed(base: FeedActivity[], state: FeedStateDto, leagueId: number
 export default function LiveFeedPage() {
   const me = useMemo(() => {
     const user = cachedUser()
-    return user ? { id: String(user.id), name: user.displayName || user.name } : { id: 'me', name: 'You' }
+    return user ? { id: String(user.id), name: user.displayName || user.name, avatarUrl: user.photoUrl ?? undefined } : { id: 'me', name: 'You', avatarUrl: undefined }
   }, [])
   const league = useMemo(() => getCachedLeague(), [])
   const [activities, setActivities] = useState<FeedActivity[]>([])
@@ -237,7 +237,7 @@ export default function LiveFeedPage() {
     try {
       const [logs, members, feed] = await Promise.all([getLeagueLogs(league.id), getLeagueMembers(league.id), getFeed(league.id)])
       const fromLogs = logsToActivities(logs, members, league)
-      setActivities(combineFeed(fromLogs, feed, league.id))
+      setActivities(combineFeed(fromLogs, feed, league.id, members))
       setError('')
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not refresh the live feed.')
@@ -357,7 +357,7 @@ export default function LiveFeedPage() {
           <form className="lf-composer" onSubmit={handleCompose}>
             <div className="lf-composer__row">
               <div className="lf-avatar lf-avatar--me" aria-hidden>
-                {initials(me.name)}
+                {me.avatarUrl ? <img src={imageSrc(me.avatarUrl)} alt="" /> : initials(me.name)}
               </div>
               <div className="lf-composer__body">
                 <label className="lf-visually-hidden" htmlFor="feed-update">

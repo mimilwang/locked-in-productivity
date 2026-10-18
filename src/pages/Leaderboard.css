@@ -389,6 +389,7 @@
   align-items: center;
   justify-content: center;
 }
+.lb-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
 
 .lb-avatar--me {
   background: var(--lime);
