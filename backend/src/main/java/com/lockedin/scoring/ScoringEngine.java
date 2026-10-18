@@ -23,7 +23,8 @@ import java.util.TreeMap;
  *   - Points are saved on the day you earned them. Going from 40% to 65% on Wednesday = 25 points on Wednesday.
  *     That's what the daily leaderboard shows, and monthly totals add up correctly even when a week
  *     spans two months.
- *   - TIME goals count minutes. TASKS goals count every log as 1 task.
+ *   - TIME goals count minutes. TASKS goals count regular completed logs as 1 task.
+ *   - Daily challenges never count toward weekly goal progress.
  *   - Daily challenges add their bonus points ON TOP (CHALLENGE_BONUS), outside the 100/week cap.
  */
 public final class ScoringEngine {
@@ -58,6 +59,9 @@ public final class ScoringEngine {
                 continue;
             }
             if (log.date().isBefore(input.startDate()) || log.date().isAfter(input.endDate())) {
+                continue;
+            }
+            if (log.bonusPoints() > 0) {
                 continue;
             }
             int amount = amountFor(input.goalType(), log.minutes());

@@ -91,10 +91,13 @@ class ProgressServiceTest {
     }
 
     @Test
-    void dailyChallengeCountsAsATaskInTaskLeagues() {
+    void dailyChallengeDoesNotCountTowardTaskGoalProgress() {
         Long taskLeague = leagues.create(me, TestFixtures.league(GoalType.TASKS, 4)).id();
         progress.completeChallenge(me, taskLeague, new CompleteChallengeRequest("fun-journal-15", "Quick journal", 15, "felt good", null));
-        assertEquals(40, leaderboards.leaderboard(me, taskLeague, LeaderboardPeriod.WEEKLY).get(0).points());
+        var row = leaderboards.leaderboard(me, taskLeague, LeaderboardPeriod.WEEKLY).get(0);
+        assertEquals(15, row.points());
+        assertEquals(0, row.weeklyPercent());
+        assertEquals(0, leaderboards.overview(me, taskLeague).myWeeklyProgress());
     }
 
     @Test

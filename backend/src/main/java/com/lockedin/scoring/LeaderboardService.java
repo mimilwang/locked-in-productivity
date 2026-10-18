@@ -78,6 +78,9 @@ public class LeaderboardService {
             if (log.getLocalDate().isBefore(weekStart) || log.getLocalDate().isAfter(weekEnd)) {
                 continue;
             }
+            if (log.getSource() == LogSource.CHALLENGE) {
+                continue;
+            }
             int amount = ScoringEngine.amountFor(league.getGoalType(), log.getDurationMinutes());
             if (amount > 0) {
                 progress.merge(log.getUserId(), amount, Integer::sum);
@@ -123,10 +126,16 @@ public class LeaderboardService {
 
         // This week's progress (0-100) as of asOf, shown next to every period's points.
         LocalDate weekStart = TimeUtils.weekStart(asOf, rules.weekStartsOn());
-        Map<Long, Integer> weeklyPercent = new HashMap<>();
-        for (ScoreEvent e : scoreEvents.findByLeagueIdAndDateBetween(league.getId(), weekStart, weekStart.plusDays(6))) {
-            if (e.getReason() == ScoreReason.WEEKLY_PROGRESS) { // challenge bonuses aren't goal progress
-                weeklyPercent.merge(e.getUserId(), e.getPoints(), Integer::sum);
+        Map<Long, Integer> weeklyProgress = new HashMap<>();
+        for (ProgressLog log : logs.findCompletedByLeagueId(league.getId())) {
+            if (log.getSource() == LogSource.CHALLENGE
+                    || log.getLocalDate().isBefore(weekStart)
+                    || log.getLocalDate().isAfter(weekStart.plusDays(6))) {
+                continue;
+            }
+            int amount = ScoringEngine.amountFor(league.getGoalType(), log.getDurationMinutes());
+            if (amount > 0) {
+                weeklyProgress.merge(log.getUserId(), amount, Integer::sum);
             }
         }
 
@@ -170,7 +179,8 @@ public class LeaderboardService {
         List<LeaderboardEntry> result = new ArrayList<>();
         for (int i = 0; i < rows.size(); i++) {
             Row r = rows.get(i);
-            int percent = Math.min(weeklyPercent.getOrDefault(r.user().getId(), 0), rules.maxWeeklyPoints());
+            int percent = ScoringEngine.weeklyPoints(
+                    weeklyProgress.getOrDefault(r.user().getId(), 0), league.getWeeklyTarget(), rules);
             result.add(new LeaderboardEntry(i + 1, r.user().getId(), r.user().getDisplayName(),
                     LeagueService.avatarFor(r.member(), r.user()), r.points(), percent, r.minutes(), r.tasks(),
                     r.streak(), standingFor(i, rows.size())));

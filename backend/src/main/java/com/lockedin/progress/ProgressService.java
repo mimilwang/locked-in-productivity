@@ -106,8 +106,8 @@ public class ProgressService {
     }
 
     /**
-     * Daily challenge done: saved as an activity with bonus points (on top of the weekly cap).
-     * In TASKS leagues it also counts as 1 task. Once per challenge per day.
+     * Daily challenge done: saved as an activity with bonus points (on top of the weekly cap),
+     * but it does not count toward weekly goal progress. Once per challenge per day.
      * If buddyUserId is set, that league member also gets the same bonus (unless they already completed it today).
      */
     @Transactional

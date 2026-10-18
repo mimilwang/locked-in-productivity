@@ -1,5 +1,7 @@
-import { cachedUser } from '../services/authService'
+import { useEffect, useState } from 'react'
+import { cachedUser, getMyProfile } from '../services/authService'
 import { getCachedLeague } from '../services/leagueService'
+import type { UserProfile } from '../types/api'
 import './AppSidebar.css'
 import { resolveImageUrl } from '../services/imageService'
 import potatoLogo from '../assets/potato-logo.jpg'
@@ -29,13 +31,32 @@ function initials(name: string) {
 }
 
 export default function AppSidebar({ active, clubhouseOnly = false }: { active: SidebarPage; clubhouseOnly?: boolean }) {
-  const user = cachedUser()
+  const [user, setUser] = useState<UserProfile | null>(() => cachedUser())
   const league = getCachedLeague()
   const name = user?.displayName || user?.name || 'Alex Chen'
   const visibleLinks = clubhouseOnly || !league ? links.slice(0, 1) : links
   const mobilePrimaryIds: SidebarPage[] = ['leagues', 'dashboard', 'activity', 'feed']
   const mobilePrimaryLinks = visibleLinks.filter((link) => mobilePrimaryIds.includes(link.id))
   const mobileMoreLinks = visibleLinks.filter((link) => !mobilePrimaryIds.includes(link.id))
+
+  useEffect(() => {
+    let mounted = true
+    void getMyProfile().then((profile) => {
+      if (mounted) setUser(profile)
+    }).catch(() => {
+      // Keep the cached profile while offline.
+    })
+
+    const handleProfileUpdate = (event: Event) => {
+      const profile = (event as CustomEvent<UserProfile>).detail
+      if (profile) setUser(profile)
+    }
+    window.addEventListener('locked-in:profile-updated', handleProfileUpdate)
+    return () => {
+      mounted = false
+      window.removeEventListener('locked-in:profile-updated', handleProfileUpdate)
+    }
+  }, [])
 
   return (
     <>
