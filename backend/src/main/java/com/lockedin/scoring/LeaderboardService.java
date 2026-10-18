@@ -118,7 +118,9 @@ public class LeaderboardService {
         LocalDate weekStart = TimeUtils.weekStart(asOf, rules.weekStartsOn());
         Map<Long, Integer> weeklyPercent = new HashMap<>();
         for (ScoreEvent e : scoreEvents.findByLeagueIdAndDateBetween(league.getId(), weekStart, weekStart.plusDays(6))) {
-            weeklyPercent.merge(e.getUserId(), e.getPoints(), Integer::sum);
+            if (e.getReason() == ScoreReason.WEEKLY_PROGRESS) { // challenge bonuses aren't goal progress
+                weeklyPercent.merge(e.getUserId(), e.getPoints(), Integer::sum);
+            }
         }
 
         Map<Long, Integer> minutes = new HashMap<>();

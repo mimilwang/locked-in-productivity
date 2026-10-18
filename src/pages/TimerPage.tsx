@@ -1,89 +1,146 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { createFocusSession, getFocusSessions, saveFocusSession } from '../lib/sessionLog'
-import type { FocusSession } from '../lib/sessionLog'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { ChangeEvent, FormEvent } from 'react'
 import { apiRequest } from '../services/apiClient'
-import { getActiveLeagueId } from '../services/leagueService'
+import { cachedUser } from '../services/authService'
+import { getCachedLeague, getLeagueLogs, getLeagueOverview } from '../services/leagueService'
+import type { LeagueOverviewData, ProgressLog } from '../services/leagueService'
 import AppSidebar from '../components/AppSidebar'
 
-const presets = [25, 45, 60]
+// Uploaded images come back as "/images/abc.png"; show them from the backend's address.
+const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? 'http://localhost:8080'
+const imageSrc = (url: string) => (url.startsWith('http') ? url : `${API_URL}${url}`)
 
-function formatTime(totalSeconds: number) {
-  const minutes = Math.floor(totalSeconds / 60)
-  const seconds = totalSeconds % 60
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+const MAX_PHOTOS = 4
+const MAX_MINUTES = 240 // the backend's longest single log
+const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+
+/** A log as the backend returns it, including the title and photos. */
+type Activity = ProgressLog & { title: string | null; photoUrls: string[] }
+
+function todayIso() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 export default function TimerPage() {
-  const [goalMinutes, setGoalMinutes] = useState(25)
-  const [secondsLeft, setSecondsLeft] = useState(goalMinutes * 60)
-  const [isRunning, setIsRunning] = useState(false)
-  const [startedAt, setStartedAt] = useState<Date | null>(null)
-  const [lastSession, setLastSession] = useState<FocusSession | null>(() => getFocusSessions()[0] ?? null)
-  const [showSuccess, setShowSuccess] = useState(false)
-  const [syncError, setSyncError] = useState('')
-  const deadlineRef = useRef<number | null>(null)
-  const loggedRef = useRef(false)
+  const league = useMemo(() => getCachedLeague(), [])
+  const user = useMemo(() => cachedUser(), [])
+  const isTime = league?.goalType === 'TIME'
 
-  const progress = useMemo(
-    () => Math.min(100, Math.max(0, ((goalMinutes * 60 - secondsLeft) / (goalMinutes * 60)) * 100)),
-    [goalMinutes, secondsLeft],
-  )
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [hours, setHours] = useState('0')
+  const [minutes, setMinutes] = useState('30')
+  const [date, setDate] = useState(todayIso())
+  const [photos, setPhotos] = useState<string[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
-  const logCompletedSession = () => {
-    if (loggedRef.current) return
-    const session = createFocusSession(startedAt ?? new Date(Date.now() - goalMinutes * 60 * 1000), goalMinutes)
-    saveFocusSession(session)
-    loggedRef.current = true
-    setLastSession(session)
-    setShowSuccess(true)
-    setIsRunning(false)
+  const [overview, setOverview] = useState<LeagueOverviewData | null>(null)
+  const [recent, setRecent] = useState<Activity[]>([])
 
-    const leagueId = getActiveLeagueId()
-    if (leagueId) {
-      void apiRequest('/logs', {
-        method: 'POST',
-        body: JSON.stringify({ leagueId, minutes: goalMinutes, note: 'Focus timer session' }),
-      }).catch((caught) => setSyncError(caught instanceof Error ? caught.message : 'Session saved on this device but could not sync.'))
+  const totalMinutes = Math.round((Number(hours) || 0) * 60 + (Number(minutes) || 0))
+
+  const refresh = useCallback(async () => {
+    if (!league) return
+    try {
+      const [data, logs] = await Promise.all([getLeagueOverview(league.id), getLeagueLogs(league.id, user?.id)])
+      setOverview(data)
+      setRecent((logs as Activity[]).filter((log) => !log.running).slice(0, 5))
+    } catch {
+      // backend unreachable: the form still shows; the error appears on submit
     }
-  }
+  }, [league, user?.id])
 
   useEffect(() => {
-    if (!isRunning || deadlineRef.current === null) return
+    void refresh()
+  }, [refresh])
 
-    const updateTimer = () => {
-      const remaining = Math.max(0, Math.ceil((deadlineRef.current! - Date.now()) / 1000))
-      setSecondsLeft(remaining)
-
-      if (remaining === 0) logCompletedSession()
+  async function handlePhotos(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? [])
+    event.target.value = '' // lets the same file be picked again later
+    if (!files.length) return
+    setError('')
+    const room = MAX_PHOTOS - photos.length
+    if (files.length > room) setError(`You can add up to ${MAX_PHOTOS} photos.`)
+    setUploading(true)
+    try {
+      const uploaded: string[] = []
+      for (const file of files.slice(0, room)) {
+        if (!PHOTO_TYPES.includes(file.type)) throw new Error('Photos must be JPG, PNG or WEBP.')
+        if (file.size > 5 * 1024 * 1024) throw new Error(`${file.name} is over 5MB.`)
+        const form = new FormData()
+        form.append('file', file)
+        const { url } = await apiRequest<{ url: string }>('/images', { method: 'POST', body: form })
+        uploaded.push(url)
+      }
+      setPhotos((current) => [...current, ...uploaded])
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not upload that photo.')
+    } finally {
+      setUploading(false)
     }
-
-    updateTimer()
-    const interval = window.setInterval(updateTimer, 250)
-    return () => window.clearInterval(interval)
-  })
-
-  const startOrPause = () => {
-    setShowSuccess(false)
-
-    if (isRunning) {
-      setIsRunning(false)
-      deadlineRef.current = null
-      return
-    }
-
-    if (!startedAt) setStartedAt(new Date())
-    deadlineRef.current = Date.now() + secondsLeft * 1000
-    setIsRunning(true)
   }
 
-  const reset = (minutes = goalMinutes) => {
-    setIsRunning(false)
-    setGoalMinutes(minutes)
-    setSecondsLeft(minutes * 60)
-    setStartedAt(null)
-    setShowSuccess(false)
-    deadlineRef.current = null
-    loggedRef.current = false
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault()
+    if (!league) return
+    if (isTime && (totalMinutes < 1 || totalMinutes > MAX_MINUTES)) {
+      setError(`Enter between 1 minute and ${MAX_MINUTES / 60} hours.`)
+      return
+    }
+    setSubmitting(true)
+    setError('')
+    setSuccess('')
+    try {
+      await apiRequest('/logs', {
+        method: 'POST',
+        body: JSON.stringify({
+          leagueId: league.id,
+          minutes: isTime ? totalMinutes : 0,
+          date,
+          title: title.trim(),
+          note: description.trim() || null,
+          photoUrls: photos,
+        }),
+      })
+      setSuccess(isTime ? `Logged ${totalMinutes} minutes: ${title.trim()}` : `Task done: ${title.trim()}`)
+      setTitle('')
+      setDescription('')
+      setPhotos([])
+      setDate(todayIso())
+      await refresh()
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not save your activity.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const myWeekly = overview?.weeklyLeaderboard.find((entry) => entry.userId === user?.id)
+  const weeklyPercent = myWeekly?.weeklyPercent ?? 0
+  const progressAmount = overview?.myWeeklyProgress ?? 0
+  const unit = isTime ? 'minutes' : 'tasks'
+
+  if (!league) {
+    return (
+      <div className="timer-page">
+        <style>{timerStyles}</style>
+        <AppSidebar active="activity" />
+        <main className="timer-main">
+          <section className="timer-content">
+            <div className="timer-heading">
+              <h1>Pick a league first.</h1>
+              <span>
+                Choose a league on <a href="/overview">Your leagues</a>, then come back to log your activity.
+              </span>
+            </div>
+          </section>
+        </main>
+      </div>
+    )
   }
 
   return (
@@ -93,76 +150,208 @@ export default function TimerPage() {
       <AppSidebar active="activity" />
 
       <main className="timer-main">
-        <header><span>THE 8 AM CLUB / FOCUS SESSION</span><a href="/overview">Back to overview →</a></header>
+        <header>
+          <span>{league.name.toUpperCase()} / LOG ACTIVITY</span>
+          <a href="/league">Back to dashboard →</a>
+        </header>
 
         <section className="timer-content">
           <div className="timer-heading">
-            <p>DAILY CHECK-IN</p>
-            <h1>Lock in. Get it done.</h1>
-            <span>Finish your session and your progress logs automatically.</span>
+            <p>LOG ACTIVITY</p>
+            <h1>Show your work.</h1>
+            <span>
+              {isTime
+                ? `${league.name} tracks time. Log how long you spent and it counts toward this week's goal.`
+                : `${league.name} tracks tasks. Every activity you log counts as one task toward this week's goal.`}
+            </span>
           </div>
 
-          {showSuccess && (
+          {success && (
             <div className="session-success" role="status">
               <span>✓</span>
-              <div><strong>Session complete — progress logged!</strong><small>+{lastSession?.points} points added to today’s score.</small></div>
+              <div>
+                <strong>{success}</strong>
+                <small>
+                  You're at {weeklyPercent}% of this week's goal ({myWeekly?.points ?? 0} pts).
+                </small>
+              </div>
               <a href="/leaderboard">View standings →</a>
             </div>
           )}
-          {syncError && <div className="timer-sync-error" role="alert">{syncError}</div>}
+          {error && (
+            <div className="timer-sync-error" role="alert">
+              {error}
+            </div>
+          )}
 
           <div className="timer-layout">
-            <section className="timer-card">
-              <div className="timer-card-top"><span>FOCUS TIMER</span><i>{isRunning ? 'LIVE' : 'READY'}</i></div>
-
-              <div className="timer-ring" style={{ '--progress': `${progress * 3.6}deg` } as React.CSSProperties}>
-                <div>
-                  <span>{isRunning ? 'SESSION IN PROGRESS' : secondsLeft === 0 ? 'COMPLETE' : 'READY TO FOCUS'}</span>
-                  <strong>{formatTime(secondsLeft)}</strong>
-                  <small>{goalMinutes} MINUTE GOAL</small>
-                </div>
+            <form className="timer-card log-form" onSubmit={handleSubmit}>
+              <div className="timer-card-top">
+                <span>NEW ACTIVITY</span>
+                <i>{isTime ? 'TIME GOAL' : 'TASK GOAL'}</i>
               </div>
 
-              <div className="preset-row" aria-label="Timer duration">
-                {presets.map((minutes) => (
-                  <button key={minutes} className={goalMinutes === minutes ? 'selected' : ''} onClick={() => reset(minutes)} disabled={isRunning}>
-                    {minutes} MIN
-                  </button>
+              <label className="log-label" htmlFor="log-title">
+                Title
+              </label>
+              <input
+                id="log-title"
+                className="log-input"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={isTime ? 'Leetcode session' : 'Gym: leg day'}
+                maxLength={100}
+                required
+              />
+
+              {isTime ? (
+                <>
+                  <span className="log-label">Time spent</span>
+                  <div className="log-duration">
+                    <label>
+                      <input
+                        type="number"
+                        className="log-input"
+                        min={0}
+                        max={4}
+                        value={hours}
+                        onChange={(e) => setHours(e.target.value)}
+                        aria-label="Hours"
+                      />
+                      <span>hours</span>
+                    </label>
+                    <label>
+                      <input
+                        type="number"
+                        className="log-input"
+                        min={0}
+                        max={59}
+                        value={minutes}
+                        onChange={(e) => setMinutes(e.target.value)}
+                        aria-label="Minutes"
+                      />
+                      <span>minutes</span>
+                    </label>
+                  </div>
+                  <small className="log-hint">Up to 4 hours per entry. Total: {totalMinutes} minutes.</small>
+                </>
+              ) : (
+                <small className="log-hint log-task-note">✓ This activity will count as 1 completed task.</small>
+              )}
+
+              <label className="log-label" htmlFor="log-date">
+                Date
+              </label>
+              <input
+                id="log-date"
+                type="date"
+                className="log-input log-date"
+                value={date}
+                max={todayIso()}
+                onChange={(e) => setDate(e.target.value)}
+                required
+              />
+
+              <label className="log-label" htmlFor="log-description">
+                Description <em>(optional)</em>
+              </label>
+              <textarea
+                id="log-description"
+                className="log-input"
+                rows={4}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="What did you work on? How did it go?"
+                maxLength={1000}
+              />
+
+              <span className="log-label">
+                Photos <em>(optional, up to {MAX_PHOTOS})</em>
+              </span>
+              <div className="log-photos">
+                {photos.map((url) => (
+                  <figure key={url}>
+                    <img src={imageSrc(url)} alt="" />
+                    <button
+                      type="button"
+                      aria-label="Remove photo"
+                      onClick={() => setPhotos((current) => current.filter((p) => p !== url))}
+                    >
+                      ×
+                    </button>
+                  </figure>
                 ))}
+                {photos.length < MAX_PHOTOS && (
+                  <label className="log-photo-add">
+                    {uploading ? 'Uploading…' : '+ Add photo'}
+                    <input type="file" accept={PHOTO_TYPES.join(',')} multiple onChange={handlePhotos} disabled={uploading} />
+                  </label>
+                )}
               </div>
 
-              <div className="timer-actions">
-                <button className="reset-button" onClick={() => reset()} disabled={secondsLeft === goalMinutes * 60}>Reset</button>
-                <button className="start-button" onClick={startOrPause} disabled={secondsLeft === 0}>
-                  {isRunning ? 'Pause session' : startedAt ? 'Resume session' : 'Start session'}
-                </button>
-              </div>
-
-              <p className="auto-log-note"><span>●</span> Your session is saved automatically when the timer reaches zero.</p>
-            </section>
+              <button className="start-button log-submit" type="submit" disabled={submitting || uploading || !title.trim()}>
+                {submitting ? 'Saving…' : isTime ? 'Log time →' : 'Log task →'}
+              </button>
+            </form>
 
             <aside className="session-sidebar">
               <section>
-                <p className="side-label">TODAY’S PROGRESS</p>
-                <div className="today-score"><strong>{lastSession ? 1 : 0}</strong><span>session<br />completed</span></div>
-                <div className="mini-progress"><span style={{ width: lastSession ? '25%' : '0%' }} /></div>
-                <small>{lastSession ? '1 of 4 weekly sessions' : 'Complete a session to check in'}</small>
+                <p className="side-label">THIS WEEK</p>
+                <div className="today-score">
+                  <strong>{weeklyPercent}%</strong>
+                  <span>
+                    of your
+                    <br />
+                    weekly goal
+                  </span>
+                </div>
+                <div className="mini-progress">
+                  <span style={{ width: `${weeklyPercent}%` }} />
+                </div>
+                <small>
+                  {progressAmount} of {league.weeklyTarget} {unit}
+                </small>
               </section>
 
               <section>
-                <p className="side-label">WHEN YOU FINISH</p>
+                <p className="side-label">HOW POINTS WORK</p>
                 <ul>
-                  <li><span>+{Math.max(10, Math.round(goalMinutes / 2))}</span> focus points</li>
-                  <li><span>+1</span> weekly session</li>
-                  <li><span>✓</span> daily check-in</li>
+                  <li>
+                    <span>1%</span> of the goal = 1 point
+                  </li>
+                  <li>
+                    <span>100</span> points max each week
+                  </li>
+                  <li>
+                    <span>Mon</span> weekly reset
+                  </li>
                 </ul>
               </section>
 
               <section className="last-session">
-                <p className="side-label">LAST SESSION</p>
-                {lastSession ? (
-                  <div><strong>{lastSession.goalMinutes} min focus</strong><span>{new Date(lastSession.completedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span></div>
-                ) : <span>No completed sessions yet.</span>}
+                <p className="side-label">YOUR RECENT ACTIVITY</p>
+                {recent.length === 0 ? (
+                  <span>Nothing logged yet.</span>
+                ) : (
+                  <ol className="recent-list">
+                    {recent.map((log) => (
+                      <li key={log.id}>
+                        <strong>{log.title || (isTime ? `${log.durationMinutes} min session` : 'Task')}</strong>
+                        <span>
+                          {isTime ? `${log.durationMinutes} min · ` : ''}
+                          {new Date(`${log.localDate}T00:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                        </span>
+                        {log.photoUrls?.length > 0 && (
+                          <div className="recent-photos">
+                            {log.photoUrls.map((url) => (
+                              <img key={url} src={imageSrc(url)} alt="" />
+                            ))}
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ol>
+                )}
               </section>
             </aside>
           </div>
@@ -177,15 +366,6 @@ const timerStyles = `
   body { margin: 0; background: #faf6ec; }
   #root { width: 100%; max-width: none; margin: 0; border: 0; text-align: left; }
   .timer-page { min-height: 100vh; display: grid; grid-template-columns: 220px 1fr; background: #faf6ec; color: #0f1c33; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
-  .timer-sidebar { position: sticky; top: 0; height: 100vh; padding: 30px 22px; display: flex; flex-direction: column; background: #0f1f3d; border-right: 1px solid #2a3f66; }
-  .timer-brand { display: flex; gap: 9px; align-items: center; color: white; text-decoration: none; font: 800 21px/1 Impact, 'Arial Narrow', sans-serif; letter-spacing: .05em; }
-  .timer-brand span { color: #f4d35e; font-size: 28px; }
-  .timer-sidebar nav { margin-top: 55px; display: grid; gap: 6px; }
-  .timer-sidebar nav a { padding: 13px; display: flex; gap: 12px; border-radius: 5px; color: #aebbb1; text-decoration: none; font-size: 12px; }
-  .timer-sidebar nav a.active { background: #f4d35e; color: #0f1f3d; box-shadow: none; }
-  .timer-user { margin-top: auto; display: flex; gap: 10px; align-items: center; font-size: 11px; }
-  .timer-user i { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: #f4d35e; color: #0f1f3d; font-style: normal; font-size: 9px; }
-  .timer-user small { margin-top: 3px; display: block; color: #91a096; }
   .timer-main { min-width: 0; }
   .timer-main > header { height: 68px; padding: 0 38px; display: flex; align-items: center; justify-content: space-between; background: #faf6ec; border-bottom: 1px solid #dddcd2; color: #737b74; font-size: 9px; letter-spacing: .08em; }
   .timer-main > header a { color: #344438; text-decoration: none; }
@@ -193,67 +373,67 @@ const timerStyles = `
   .timer-heading { text-align: center; }
   .timer-heading p { margin: 0 0 10px; color: #8a6300; font-size: 10px; letter-spacing: .12em; }
   .timer-heading h1 { margin: 0; color: #0f1c33; font: 800 clamp(38px, 5vw, 60px)/1 Impact, 'Arial Narrow', sans-serif; letter-spacing: .025em; }
-  .timer-heading > span { margin-top: 12px; display: block; color: #747a74; font-size: 13px; }
+  .timer-heading > span { margin: 12px auto 0; max-width: 560px; display: block; color: #747a74; font-size: 13px; line-height: 1.5; }
+  .timer-heading a { color: #284a85; }
   .session-success { margin: 28px auto -8px; max-width: 760px; padding: 14px 17px; display: flex; align-items: center; gap: 12px; border: 1px solid #eedb9b; border-radius: 7px; background: #fbf1cf; }
   .session-success > span { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: #f4d35e; color: #0f1c33; font-weight: 900; }
-  .session-success div { flex: 1; font-size: 11px; }
-  .session-success small { margin-top: 3px; display: block; color: #73806f; }
-  .session-success a { color: #3a5488; font-size: 10px; text-decoration: none; }
-  .timer-sync-error { margin: 14px auto -8px; max-width: 760px; padding: 11px 14px; border: 1px solid #e1b2aa; border-radius: 5px; background: #fff0ed; color: #8d2e21; font-size: 10px; }
-  .timer-layout { margin-top: 35px; display: grid; grid-template-columns: 1fr 280px; gap: 18px; align-items: start; }
+  .session-success div { flex: 1; font-size: 12px; }
+  .session-success small { margin-top: 3px; display: block; color: #6e6f68; }
+  .session-success a { color: #3a5488; font-size: 11px; text-decoration: none; }
+  .timer-sync-error { margin: 14px auto -8px; max-width: 760px; padding: 11px 14px; border: 1px solid #e1b2aa; border-radius: 5px; background: #fff0ed; color: #8d2e21; font-size: 12px; }
+  .timer-layout { margin-top: 35px; display: grid; grid-template-columns: 1fr 290px; gap: 18px; align-items: start; }
   .timer-card, .session-sidebar section { border: 1px solid #dbddd2; border-radius: 8px; background: #fff; }
-  .timer-card { padding: 26px 34px 24px; }
-  .timer-card-top { display: flex; justify-content: space-between; color: #788078; font-size: 9px; letter-spacing: .1em; }
-  .timer-card-top i { padding: 4px 7px; border-radius: 3px; background: #fbf1cf; color: #8a6300; font-style: normal; }
-  .timer-ring { --progress: 0deg; width: min(310px, 78vw); aspect-ratio: 1; margin: 27px auto; padding: 9px; display: grid; place-items: center; border-radius: 50%; background: conic-gradient(#f4d35e var(--progress), #e1e3da 0); box-shadow: 0 0 45px rgba(92,132,36,.08); }
-  .timer-ring > div { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 50%; background: #fdfaf2; box-shadow: inset 0 0 35px rgba(23,35,27,.05); }
-  .timer-ring span, .timer-ring small { color: #788078; font-size: 9px; letter-spacing: .12em; }
-  .timer-ring strong { margin: 12px 0 9px; font: 800 clamp(52px, 7vw, 82px)/1 monospace; letter-spacing: -.07em; }
-  .preset-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .preset-row button { padding: 10px; border: 1px solid #d8dbd1; border-radius: 5px; background: #fdfaf2; color: #727a73; font-size: 9px; font-weight: 800; cursor: pointer; }
-  .preset-row button.selected { border-color: #e8bf3a; background: #fbf1cf; color: #8a6300; }
-  .preset-row button:disabled { cursor: not-allowed; opacity: .55; }
-  .timer-actions { margin-top: 17px; display: grid; grid-template-columns: 110px 1fr; gap: 9px; }
-  .timer-actions button { min-height: 48px; border-radius: 5px; font-weight: 850; cursor: pointer; }
-  .reset-button { border: 1px solid #d3d7cd; background: transparent; color: #626b63; }
-  .start-button { border: 0; background: #f4d35e; color: #0f1c33; box-shadow: 0 0 25px rgba(139,189,54,.12); }
-  .timer-actions button:disabled { opacity: .4; cursor: not-allowed; }
-  .auto-log-note { margin: 15px 0 0; text-align: center; color: #747d75; font-size: 9px; }
-  .auto-log-note span { color: #8a6300; }
+  .timer-card { padding: 26px 30px 26px; }
+  .timer-card-top { margin-bottom: 8px; display: flex; justify-content: space-between; color: #788078; font-size: 9px; letter-spacing: .1em; }
+  .timer-card-top i { padding: 4px 7px; border-radius: 3px; background: #fbf1cf; color: #8a6300; font-style: normal; font-weight: 800; }
+  .log-form { display: flex; flex-direction: column; }
+  .log-label { margin: 16px 0 6px; color: #5e685f; font-size: 11px; font-weight: 700; }
+  .log-label em { color: #8a928b; font-style: normal; font-weight: 500; }
+  .log-input { width: 100%; padding: 11px 12px; border: 1px solid #d6d9d0; border-radius: 6px; background: #fdfaf2; color: #0f1c33; font: inherit; font-size: 14px; }
+  .log-input:focus { outline: 2px solid #f4d35e; outline-offset: 1px; }
+  textarea.log-input { resize: vertical; }
+  .log-date { max-width: 200px; }
+  .log-duration { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .log-duration label { display: flex; align-items: center; gap: 8px; color: #6e6f68; font-size: 12px; }
+  .log-hint { margin-top: 6px; color: #747d75; font-size: 11px; }
+  .log-task-note { margin-top: 16px; padding: 10px 12px; border-radius: 6px; background: #fbf1cf; color: #8a6300; font-weight: 700; }
+  .log-photos { display: flex; flex-wrap: wrap; gap: 10px; }
+  .log-photos figure { position: relative; width: 92px; height: 92px; margin: 0; overflow: hidden; border-radius: 8px; border: 1px solid #dbddd2; }
+  .log-photos img { width: 100%; height: 100%; object-fit: cover; }
+  .log-photos figure button { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border: 0; border-radius: 50%; background: rgba(15, 31, 61, .75); color: white; cursor: pointer; line-height: 1; }
+  .log-photo-add { width: 92px; height: 92px; display: grid; place-items: center; border: 1.5px dashed #c9ccc2; border-radius: 8px; color: #6e6f68; font-size: 11px; font-weight: 700; text-align: center; cursor: pointer; }
+  .log-photo-add input { display: none; }
+  .start-button { border: 0; background: #f4d35e; color: #0f1c33; }
+  .log-submit { margin-top: 24px; min-height: 50px; border-radius: 6px; font-size: 14px; font-weight: 850; cursor: pointer; }
+  .log-submit:disabled { opacity: .45; cursor: not-allowed; }
   .session-sidebar { display: grid; gap: 13px; }
   .session-sidebar section { padding: 21px; }
   .side-label { margin: 0 0 17px; color: #788078; font-size: 9px; letter-spacing: .1em; }
   .today-score { display: flex; align-items: center; gap: 11px; }
-  .today-score strong { color: #8a6300; font: 800 48px/1 Impact, 'Arial Narrow', sans-serif; }
+  .today-score strong { color: #8a6300; font: 800 44px/1 Impact, 'Arial Narrow', sans-serif; }
   .today-score span { color: #717a72; font-size: 11px; line-height: 1.3; }
   .mini-progress { height: 6px; margin: 17px 0 8px; overflow: hidden; border-radius: 5px; background: #e1e3da; }
   .mini-progress span { height: 100%; display: block; background: #f4d35e; }
-  .session-sidebar section > small { color: #747d75; font-size: 9px; }
+  .session-sidebar section > small { color: #747d75; font-size: 10px; }
   .session-sidebar ul { margin: 0; padding: 0; display: grid; gap: 13px; list-style: none; color: #5e685f; font-size: 11px; }
   .session-sidebar li { display: flex; align-items: center; gap: 10px; }
-  .session-sidebar li span { width: 33px; color: #8a6300; font-weight: 900; }
-  .last-session div { display: flex; flex-direction: column; gap: 5px; }
-  .last-session div strong { font-size: 12px; }
-  .last-session div span, .last-session > span { color: #747d75; font-size: 9px; }
+  .session-sidebar ul li span { width: 36px; color: #8a6300; font-weight: 900; }
+  .last-session > span { color: #747d75; font-size: 11px; }
+  .recent-list { margin: 0; padding: 0; display: grid; gap: 14px; list-style: none; }
+  .recent-list li { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+  .recent-list strong { font-size: 12px; }
+  .recent-list span { color: #747d75; font-size: 10px; }
+  .recent-photos { display: flex; gap: 6px; }
+  .recent-photos img { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; }
   @media (max-width: 800px) {
     .timer-page { grid-template-columns: 72px 1fr; }
-    .timer-sidebar { padding: 24px 11px; align-items: center; }
-    .timer-brand { font-size: 0; }
-    .timer-brand span { font-size: 28px; }
-    .timer-sidebar nav a span, .timer-user span { display: none; }
-    .timer-sidebar nav a { justify-content: center; font-size: 17px; }
     .timer-layout { grid-template-columns: 1fr; }
-    .session-sidebar { grid-template-columns: repeat(3, 1fr); }
   }
   @media (max-width: 580px) {
     .timer-page { display: block; }
-    .timer-sidebar { position: static; width: 100%; height: auto; padding: 14px 18px; flex-direction: row; justify-content: space-between; }
-    .timer-brand { font-size: 18px; }
-    .timer-sidebar nav, .timer-user { display: none; }
     .timer-main > header { height: 50px; padding: 0 18px; }
     .timer-content { width: calc(100% - 30px); padding: 30px 0; }
-    .timer-layout { margin-top: 25px; }
     .timer-card { padding: 20px 17px; }
-    .session-sidebar { grid-template-columns: 1fr; }
+    .log-duration { grid-template-columns: 1fr; }
   }
 `
