@@ -1,16 +1,19 @@
 /* Locked In — "Your leagues" dashboard styles */
 
 .db-page {
-  --green-900: #0f1f3d;
-  --green-800: #17305c;
-  --green-700: #284a85;
-  --lime: #f4d35e;
-  --lime-soft: #fbf1cf;
-  --cream: #faf6ec;
-  --card: #fffdf8;
-  --border: #e3ddd0;
-  --text: #0f1c33;
+  --green-900: #244452;
+  --green-800: #2b6578;
+  --green-700: #328eab;
+  --lime: #ffd66b;
+  --lime-soft: #ffe0d5;
+  --cream: #fff9ef;
+  --card: #fff9ef;
+  --border: #d8cfc2;
+  --text: #244452;
   --muted: #6e6f68;
+  --coral: #ff9778;
+  --pale-blue: #d8eff4;
+  --pale-peach: #ffe0d5;
 
   /* Break out of the centered #root box from index.css so the page is full width */
   width: 100vw;
@@ -24,6 +27,14 @@
   font-size: 14px;
   line-height: 1.45;
 }
+
+/* Bold coastal treatment */
+.db-btn--primary { background: var(--green-700); border-color: #216c84; color: #fff; box-shadow: 0 5px 0 #216c84; }
+.db-quote { background: var(--coral); color: var(--green-900); }
+.db-quote-mark, .db-quote-body figcaption { color: var(--green-900); }
+.db-card { border-radius: 18px; }
+.db-card:hover { transform: translateY(-5px) rotate(-0.25deg); box-shadow: 0 14px 0 rgba(36, 68, 82, 0.13); }
+.db-bar span { background: var(--green-700); }
 
 .db-page *,
 .db-page *::before,
@@ -250,7 +261,7 @@
 
 .db-btn--primary {
   background: var(--lime);
-  border: 1px solid #e8bf3a;
+  border: 1px solid #e4ad35;
   color: var(--green-900);
 }
 
@@ -425,7 +436,7 @@
 
 .db-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(15, 31, 61, 0.12);
+  box-shadow: 0 10px 24px rgba(36, 68, 82, 0.12);
 }
 
 .db-cover {
@@ -711,3 +722,11 @@
     transform: none;
   }
 }
+
+/* Final coastal surface overrides */
+.db-btn--primary { background: var(--green-700); border-color: #216c84; color: #fff; box-shadow: 0 5px 0 #216c84; }
+.db-quote { background: var(--coral); color: var(--green-900); }
+.db-quote-mark, .db-quote-body figcaption { color: var(--green-900); }
+.db-card { border-radius: 18px; }
+.db-card:hover { transform: translateY(-5px) rotate(-0.25deg); box-shadow: 0 14px 0 rgba(36, 68, 82, 0.13); }
+.db-bar span { background: var(--green-700); }

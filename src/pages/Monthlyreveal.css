@@ -1,11 +1,11 @@
 /* Locked In — Monthly reveal ("season finale") styles */
 
 .mr-page {
-  --green-900: #0f1f3d;
-  --green-700: #284a85;
-  --lime: #f4d35e;
-  --cream: #faf6ec;
-  --ink: #0f1c33;
+  --green-900: #244452;
+  --green-700: #328eab;
+  --lime: #ffd66b;
+  --cream: #fff9ef;
+  --ink: #244452;
 
   /* Full-screen takeover */
   position: fixed;
@@ -45,7 +45,7 @@
   color: var(--green-900);
   --accent: var(--green-900);
   --soft: #34508a;
-  --line: rgba(15, 31, 61, 0.25);
+  --line: rgba(36, 68, 82, 0.25);
 }
 
 .mr-theme-cream {
@@ -60,7 +60,7 @@
 .mr-theme-chud {
   background: #ebe6da;
   color: var(--ink);
-  --accent: #b5452c;
+  --accent: #c95539;
   --soft: #6e6f68;
   --line: rgba(27, 29, 26, 0.2);
 }
@@ -69,6 +69,11 @@
 .mr-theme-chud .mr-name {
   rotate: -2deg; /* separate from transform so it doesn't fight the animations */
 }
+
+.mr-theme-dark { background: #328eab; }
+.mr-theme-lime { background: #ffd66b; }
+.mr-theme-cream { background: #ff9778; }
+.mr-theme-chud { background: #ffe0d5; }
 
 /* ---------- Progress bars ---------- */
 .mr-progress {
@@ -239,7 +244,7 @@
   gap: 4px;
   padding: 20px;
   border-radius: 12px;
-  background: #fffdf8;
+  background: #fff9ef;
   border: 1px solid var(--line);
 }
 
@@ -375,7 +380,7 @@
   background: var(--green-900);
   color: #fff;
   text-align: left;
-  box-shadow: 0 20px 50px rgba(15, 31, 61, 0.25);
+  box-shadow: 0 20px 50px rgba(36, 68, 82, 0.25);
 }
 
 .mr-share-league {
@@ -423,7 +428,7 @@
 }
 
 .mr-share-row--chud .mr-share-pts {
-  color: #e58a74;
+  color: #ff9778;
 }
 
 .mr-share-footer {

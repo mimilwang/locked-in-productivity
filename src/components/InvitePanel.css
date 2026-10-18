@@ -4,10 +4,10 @@
 
 .invite__toggle {
   padding: 14px 18px;
-  border: 1.5px solid var(--brand-navy, #0f1f3d);
+  border: 1.5px solid var(--brand-navy, #244452);
   border-radius: 5px;
   background: transparent;
-  color: var(--brand-navy, #0f1f3d);
+  color: var(--brand-navy, #244452);
   font-weight: 800;
   white-space: nowrap;
   cursor: pointer;
@@ -15,8 +15,8 @@
 
 .invite__toggle:hover,
 .invite__toggle[aria-expanded='true'] {
-  background: var(--brand-navy, #0f1f3d);
-  color: var(--brand-cream, #faf6ec);
+  background: var(--brand-navy, #244452);
+  color: var(--brand-cream, #fff9ef);
 }
 
 .invite__panel {
@@ -26,10 +26,10 @@
   z-index: 50;
   width: min(340px, calc(100vw - 32px));
   padding: 18px;
-  border: 1px solid #e3ddd0;
+  border: 1px solid #d8cfc2;
   border-radius: 10px;
   background: #fff;
-  box-shadow: 0 16px 40px rgba(15, 31, 61, 0.18);
+  box-shadow: 0 16px 40px rgba(36, 68, 82, 0.18);
   text-align: left;
 }
 
@@ -64,11 +64,11 @@
   gap: 10px;
   padding: 10px 12px;
   border-radius: 8px;
-  background: var(--brand-cream, #faf6ec);
+  background: var(--brand-cream, #fff9ef);
 }
 
 .invite__code {
-  color: var(--brand-navy, #0f1f3d);
+  color: var(--brand-navy, #244452);
   font: 800 26px/1 ui-monospace, Menlo, monospace;
   letter-spacing: 0.18em;
 }
@@ -78,8 +78,8 @@
   padding: 8px 12px;
   border: 0;
   border-radius: 5px;
-  background: var(--brand-yellow, #f4d35e);
-  color: var(--brand-ink, #0f1c33);
+  background: var(--brand-yellow, #ffd66b);
+  color: var(--brand-ink, #244452);
   font-size: 12px;
   font-weight: 800;
   text-decoration: none;

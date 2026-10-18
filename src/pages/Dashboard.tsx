@@ -36,7 +36,7 @@ type LeagueSummary = {
   league: League
 }
 
-const CARD_COLORS = ['#0f1f3d', '#284a85', '#3f3a24', '#24384c', '#4b2f35', '#2e4268']
+const CARD_COLORS = ['#328EAB', '#FF9778', '#244452', '#E68061', '#28758E', '#D19C29']
 
 // ---------- Helpers ----------
 

@@ -1,13 +1,16 @@
 :root {
-  /* Brand: dark blue on light cream, classic serif headings */
-  --font-display: 'Libre Caslon Text', Georgia, 'Times New Roman', serif;
+  /* Sunny coastal palette: bold, playful, and high-contrast. */
+  --font-display: Rockwell, 'Rockwell Nova', 'Roboto Slab', Georgia, serif;
   --font-body: 'Inter', system-ui, sans-serif;
-  --brand-navy: #0f1f3d;
-  --brand-blue: #284a85;
-  --brand-ink: #0f1c33;
-  --brand-cream: #faf6ec;
-  --brand-yellow: #f4d35e; /* accent: buttons, active links, progress bars */
-  --brand-gold: #8a6300; /* accent text on cream */
+  --brand-navy: #244452;
+  --brand-blue: #328eab;
+  --brand-coral: #ff9778;
+  --brand-yellow: #ffd66b;
+  --brand-cream: #fff9ef;
+  --brand-pale-blue: #d8eff4;
+  --brand-pale-peach: #ffe0d5;
+  --brand-ink: #244452;
+  --brand-gold: #9a6400;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -28,10 +31,51 @@ body {
   font-family: var(--font-body);
 }
 
-/* Headings use the serif everywhere, even where a page sets its own font. */
+/* Inter handles readable interface copy and controls. */
+p,
+small,
+label,
+input,
+select,
+textarea,
+button,
+[class*='eyebrow'],
+[class*='hint'],
+[class*='label'],
+[class*='meta'],
+[class*='subtitle'] {
+  font-family: var(--font-body) !important;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease, border-color 160ms ease;
+}
+
+button:not(:disabled):hover,
+a[class*='btn']:hover,
+a[class*='button']:hover {
+  transform: translateY(-2px);
+}
+
+/* Rockwell is reserved for high-impact, game-like display moments. */
 h1,
 h2,
-h3 {
+h3,
+[class*='logo'],
+[class*='brand'],
+[class*='rank'],
+[class*='score'],
+[class*='points'],
+[class*='stat-value'],
+.profile-stats strong,
+.stats-strip strong,
+.today-score strong,
+.hero-score strong {
   font-family: var(--font-display) !important;
-  letter-spacing: -0.01em !important;
+  letter-spacing: -0.035em !important;
+  font-weight: 800;
 }

@@ -1,16 +1,19 @@
 /* Locked In — Leaderboard page styles (matches the Figma design) */
 
 .lb-page {
-  --green-900: #0f1f3d;
-  --green-800: #17305c;
-  --green-700: #284a85;
-  --lime: #f4d35e;
-  --lime-soft: #fbf1cf;
-  --cream: #faf6ec;
-  --card: #fffdf8;
-  --border: #e3ddd0;
-  --text: #0f1c33;
+  --green-900: #244452;
+  --green-800: #2b6578;
+  --green-700: #328eab;
+  --lime: #ffd66b;
+  --lime-soft: #ffe0d5;
+  --cream: #fff9ef;
+  --card: #fff9ef;
+  --border: #d8cfc2;
+  --text: #244452;
   --muted: #6e6f68;
+  --coral: #ff9778;
+  --pale-blue: #d8eff4;
+  --pale-peach: #ffe0d5;
 
   /* Break out of the centered #root box from index.css so the page is full width */
   width: 100vw;
@@ -24,6 +27,15 @@
   font-size: 14px;
   line-height: 1.45;
 }
+
+/* Competition gets the loudest color story. */
+.lb-leader-card { border-radius: 18px; background: var(--coral); color: var(--green-900); box-shadow: 0 8px 0 #d96f53; }
+.lb-leader-name, .lb-leader-detail { color: var(--green-900); }
+.lb-stat-card { border-radius: 18px; background: var(--pale-blue); }
+.lb-stat-card:last-child { background: var(--lime); }
+.lb-card { border-radius: 18px; }
+.lb-table tbody tr:first-child td { background: var(--pale-peach); }
+.lb-table tbody tr:hover td { background: var(--pale-blue); }
 
 .lb-page *,
 .lb-page *::before,
@@ -546,7 +558,7 @@
   margin: 0 0 20px;
   padding: 14px 18px;
   border-radius: 14px;
-  background: rgba(40, 74, 133, 0.08);
+  background: rgba(50, 142, 171, 0.08);
   font-size: 15px;
   font-weight: 600;
 }
@@ -572,3 +584,13 @@
 .lb-row--chud td {
   opacity: 0.85;
 }
+
+/* Final coastal competition overrides */
+.lb-leader-card { border-radius: 18px; background: var(--coral); color: var(--green-900); box-shadow: 0 8px 0 #d96f53; }
+.lb-leader-name, .lb-leader-detail { color: var(--green-900); }
+.lb-stat-card { border-radius: 18px; background: var(--pale-blue); }
+.lb-stat-card:last-child { background: var(--lime); }
+.lb-card { border-radius: 18px; }
+.lb-table tbody tr:first-child td { background: var(--pale-peach); }
+.lb-table tbody tr:hover td { background: var(--pale-blue); }
+.lb-row--chud td { background: var(--pale-peach); }

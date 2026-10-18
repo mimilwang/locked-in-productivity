@@ -6,7 +6,7 @@ const PIECES = Array.from({ length: 70 }, (_, i) => ({
   left: (i * 37) % 100,
   delay: ((i * 13) % 20) / 20,
   duration: 2.2 + ((i * 7) % 10) / 10,
-  color: ['#1b3a73', '#c3b1e1', '#f4d35e', '#f28c6b', '#8ec5e8', '#faf6ec'][i % 6],
+  color: ['#1b3a73', '#c3b1e1', '#ffd66b', '#ff9778', '#8ec5e8', '#fff9ef'][i % 6],
   rotate: (i * 47) % 360,
 }))
 
