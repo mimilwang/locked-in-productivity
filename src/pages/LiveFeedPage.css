@@ -308,9 +308,9 @@
 }
 
 .lf-composer__preview img {
+  display: block;
   width: 100%;
-  max-height: 220px;
-  object-fit: cover;
+  height: auto;
   border-radius: 8px;
   border: 1px solid var(--border);
 }
@@ -493,8 +493,7 @@
 .lf-card__photo img {
   display: block;
   width: 100%;
-  max-height: 320px;
-  object-fit: cover;
+  height: auto;
 }
 
 .lf-reactions {
