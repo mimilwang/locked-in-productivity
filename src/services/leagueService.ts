@@ -93,15 +93,20 @@ export function setActiveLeague(league: League) {
   window.dispatchEvent(new CustomEvent('locked-in:active-league-changed', { detail: league }))
 }
 
+export function clearActiveLeague() {
+  window.localStorage.removeItem(ACTIVE_LEAGUE_KEY)
+  window.localStorage.removeItem(ACTIVE_LEAGUE_DATA_KEY)
+  window.dispatchEvent(new CustomEvent('locked-in:active-league-changed', { detail: null }))
+}
+
 export async function getMyLeagues() {
   const leagues = await apiRequest<League[]>('/leagues')
   const activeId = getActiveLeagueId()
-  const activeLeague = leagues.find((league) => league.id === activeId) ?? leagues[0] ?? null
+  const activeLeague = leagues.find((league) => league.id === activeId) ?? null
   if (activeLeague) {
     setActiveLeague(activeLeague)
-  } else {
-    window.localStorage.removeItem(ACTIVE_LEAGUE_KEY)
-    window.localStorage.removeItem(ACTIVE_LEAGUE_DATA_KEY)
+  } else if (activeId !== null) {
+    clearActiveLeague()
   }
   return leagues
 }

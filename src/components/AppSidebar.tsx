@@ -30,6 +30,7 @@ export default function AppSidebar({ active, clubhouseOnly = false }: { active: 
   const user = cachedUser()
   const league = getCachedLeague()
   const name = user?.displayName || user?.name || 'Alex Chen'
+  const visibleLinks = clubhouseOnly || !league ? links.slice(0, 1) : links
 
   return (
     <aside className="app-sidebar">
@@ -39,7 +40,7 @@ export default function AppSidebar({ active, clubhouseOnly = false }: { active: 
 
       <p className="app-sidebar__label">YOUR CLUBHOUSE</p>
       <nav className="app-sidebar__nav" aria-label="Main navigation">
-        {(clubhouseOnly ? links.slice(0, 1) : links).map((link, index) => (
+        {visibleLinks.map((link, index) => (
           <div key={link.id}>
             {index === 1 && <p className="app-sidebar__label app-sidebar__league">{(league?.name || 'YOUR LEAGUE').toUpperCase()}</p>}
             <a
@@ -53,12 +54,10 @@ export default function AppSidebar({ active, clubhouseOnly = false }: { active: 
         ))}
       </nav>
 
-      {!clubhouseOnly && (
-        <a className="app-sidebar__profile" href="/profile" aria-current={active === 'profile' ? 'page' : undefined}>
-          <span className="app-sidebar__avatar">{initials(name)}</span>
-          <span><strong>{name}</strong><small>{user?.school || 'View your profile'}</small></span>
-        </a>
-      )}
+      <a className="app-sidebar__profile" href="/profile" aria-current={active === 'profile' ? 'page' : undefined}>
+        <span className="app-sidebar__avatar">{initials(name)}</span>
+        <span><strong>{name}</strong><small>{user?.school || 'View your profile'}</small></span>
+      </a>
     </aside>
   )
 }

@@ -9,6 +9,7 @@ import {
   getMyLeagues,
   joinLeague,
   setActiveLeague,
+  clearActiveLeague,
 } from '../services/leagueService'
 import type { League } from '../services/leagueService'
 import type { UserProfile } from '../types/api'
@@ -96,6 +97,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     let cancelled = false
+    clearActiveLeague()
 
     async function loadDashboard() {
       setLoading(true)
