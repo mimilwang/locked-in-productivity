@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { ChangeEvent, FormEvent } from 'react'
+import type { ChangeEvent, CSSProperties, FormEvent } from 'react'
 import { apiRequest } from '../services/apiClient'
 import { cachedUser } from '../services/authService'
 import { getCachedLeague, getLeagueLogs, getLeagueOverview } from '../services/leagueService'
@@ -37,11 +37,56 @@ export default function TimerPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [timerState, setTimerState] = useState<'idle' | 'running' | 'paused' | 'finished'>('idle')
+  const [remainingSeconds, setRemainingSeconds] = useState(30 * 60)
 
   const [overview, setOverview] = useState<LeagueOverviewData | null>(null)
   const [recent, setRecent] = useState<Activity[]>([])
 
   const totalMinutes = Math.round((Number(hours) || 0) * 60 + (Number(minutes) || 0))
+
+  useEffect(() => {
+    if (timerState !== 'running') return
+    const interval = window.setInterval(() => {
+      setRemainingSeconds((current) => {
+        if (current <= 1) {
+          window.clearInterval(interval)
+          setTimerState('finished')
+          return 0
+        }
+        return current - 1
+      })
+    }, 1000)
+    return () => window.clearInterval(interval)
+  }, [timerState])
+
+  const timerDisplay = `${String(Math.floor(remainingSeconds / 3600)).padStart(2, '0')}:${String(Math.floor((remainingSeconds % 3600) / 60)).padStart(2, '0')}:${String(remainingSeconds % 60).padStart(2, '0')}`
+  const timerProgress = totalMinutes > 0 ? remainingSeconds / (totalMinutes * 60) : 0
+
+  function updateHours(value: string) {
+    setHours(value)
+    setRemainingSeconds(Math.max(Math.round((Number(value) || 0) * 60 + (Number(minutes) || 0)), 0) * 60)
+  }
+
+  function updateMinutes(value: string) {
+    setMinutes(value)
+    setRemainingSeconds(Math.max(Math.round((Number(hours) || 0) * 60 + (Number(value) || 0)), 0) * 60)
+  }
+
+  function startTimer() {
+    if (totalMinutes < 1 || totalMinutes > MAX_MINUTES) {
+      setError(`Set a focus goal between 1 minute and ${MAX_MINUTES / 60} hours.`)
+      return
+    }
+    setError('')
+    setSuccess('')
+    setTimerState('running')
+  }
+
+  function resetTimer() {
+    setTimerState('idle')
+    setRemainingSeconds(Math.max(totalMinutes, 0) * 60)
+  }
 
   const refresh = useCallback(async () => {
     if (!league) return
@@ -111,6 +156,7 @@ export default function TimerPage() {
       setDescription('')
       setPhotos([])
       setDate(todayIso())
+      if (isTime) resetTimer()
       await refresh()
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not save your activity.')
@@ -185,6 +231,64 @@ export default function TimerPage() {
           )}
 
           <div className="timer-layout">
+            {isTime ? (
+              <form className="timer-card focus-form" onSubmit={handleSubmit}>
+                <div className="timer-card-top">
+                  <span>FOCUS TIMER</span>
+                  <i>TIME GOAL</i>
+                </div>
+
+                <label className="log-label" htmlFor="focus-title">What are you focusing on?</label>
+                <input
+                  id="focus-title"
+                  className="log-input"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Leetcode session"
+                  maxLength={100}
+                  required
+                  disabled={timerState === 'running'}
+                />
+
+                <fieldset className="focus-goal" disabled={timerState !== 'idle'}>
+                  <legend>Set your time goal</legend>
+                  <label>
+                    <input type="number" min={0} max={4} value={hours} onChange={(e) => updateHours(e.target.value)} aria-label="Hours" />
+                    <span>hours</span>
+                  </label>
+                  <b>:</b>
+                  <label>
+                    <input type="number" min={0} max={59} value={minutes} onChange={(e) => updateMinutes(e.target.value)} aria-label="Minutes" />
+                    <span>minutes</span>
+                  </label>
+                </fieldset>
+
+                <div className="focus-clock" style={{ '--timer-progress': `${timerProgress * 360}deg` } as CSSProperties}>
+                  <div>
+                    <span className="focus-bolt" aria-hidden>ϟ</span>
+                    <strong>{timerDisplay}</strong>
+                    <small>{timerState === 'idle' ? 'Ready to focus?' : timerState === 'running' ? 'Locked in.' : timerState === 'paused' ? 'Session paused' : 'Goal complete!'}</small>
+                  </div>
+                </div>
+
+                {timerState === 'finished' ? (
+                  <button className="start-button log-submit focus-primary" type="submit" disabled={submitting || !title.trim()}>
+                    {submitting ? 'Saving…' : `Log ${totalMinutes} minute session →`}
+                  </button>
+                ) : (
+                  <button
+                    className="start-button log-submit focus-primary"
+                    type="button"
+                    disabled={!title.trim() || totalMinutes < 1 || totalMinutes > MAX_MINUTES}
+                    onClick={timerState === 'running' ? () => setTimerState('paused') : startTimer}
+                  >
+                    {timerState === 'running' ? 'Pause session' : timerState === 'paused' ? 'Resume session' : 'Start session'}
+                  </button>
+                )}
+                {timerState !== 'idle' && <button className="focus-reset" type="button" onClick={resetTimer}>Reset timer</button>}
+                <p className="focus-encouragement">Every minute brings you closer to the top!</p>
+              </form>
+            ) : (
             <form className="timer-card log-form" onSubmit={handleSubmit}>
               <div className="timer-card-top">
                 <span>NEW ACTIVITY</span>
@@ -293,6 +397,7 @@ export default function TimerPage() {
                 {submitting ? 'Saving…' : isTime ? 'Log time →' : 'Log task →'}
               </button>
             </form>
+            )}
 
             <aside className="session-sidebar">
               <section>
@@ -397,6 +502,25 @@ const timerStyles = `
   .log-duration label { display: flex; align-items: center; gap: 8px; color: #6e6f68; font-size: 12px; }
   .log-hint { margin-top: 6px; color: #747d75; font-size: 11px; }
   .log-task-note { margin-top: 16px; padding: 10px 12px; border-radius: 6px; background: #ffe0d5; color: #8a6300; font-weight: 700; }
+  .focus-form { display: flex; flex-direction: column; align-items: stretch; background: #244452; color: white; }
+  .focus-form .timer-card-top { color: #b9dce5; }
+  .focus-form .timer-card-top i { background: rgba(255,255,255,.12); color: #fff; }
+  .focus-form > .log-label { color: #d8eff4; }
+  .focus-form > .log-input { background: rgba(255,255,255,.95); }
+  .focus-goal { margin: 18px auto 8px; padding: 0; display: flex; align-items: center; justify-content: center; gap: 12px; border: 0; }
+  .focus-goal legend { width: 100%; margin-bottom: 8px; color: #b9dce5; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-align: center; text-transform: uppercase; }
+  .focus-goal label { display: grid; justify-items: center; gap: 4px; color: #b9dce5; font-size: 10px; }
+  .focus-goal input { width: 72px; height: 46px; border: 0; border-radius: 9px; background: #fff9ef; color: #244452; font: 800 20px/1 Inter, sans-serif; text-align: center; }
+  .focus-goal b { margin-top: -13px; color: #ffd66b; font-size: 24px; }
+  .focus-goal:disabled { opacity: .7; }
+  .focus-clock { --timer-progress: 360deg; width: min(330px, 78vw); aspect-ratio: 1; margin: 14px auto 4px; padding: 14px; display: grid; place-items: center; border-radius: 50%; background: conic-gradient(#ffd66b var(--timer-progress), rgba(255,255,255,.16) 0); box-shadow: 0 15px 35px rgba(0,0,0,.2); }
+  .focus-clock > div { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 50%; background: #328eab; text-align: center; }
+  .focus-bolt { color: #ffd66b; font-size: 42px; line-height: 1; transform: skew(-8deg); }
+  .focus-clock strong { margin: 8px 0 5px; color: #fff; font: 800 clamp(38px, 6vw, 54px)/1 Inter, sans-serif; letter-spacing: .01em; }
+  .focus-clock small { color: #fff; font-size: 16px; }
+  .focus-primary { width: 100%; margin-top: 20px; background: #fff9ef; color: #244452; box-shadow: none; }
+  .focus-reset { align-self: center; margin-top: 13px; padding: 6px 10px; border: 0; background: transparent; color: #b9dce5; font: inherit; font-size: 11px; text-decoration: underline; cursor: pointer; }
+  .focus-encouragement { margin: 18px 0 0; color: #b9dce5; font-size: 13px; text-align: center; }
   .log-photos { display: flex; flex-wrap: wrap; gap: 10px; }
   .log-photos figure { position: relative; width: 92px; height: 92px; margin: 0; overflow: hidden; border-radius: 8px; border: 1px solid #d8cfc2; }
   .log-photos img { width: 100%; height: 100%; object-fit: cover; }
@@ -438,5 +562,7 @@ const timerStyles = `
     .timer-content { width: calc(100% - 30px); padding: 30px 0; }
     .timer-card { padding: 20px 17px; }
     .log-duration { grid-template-columns: 1fr; }
+    .focus-clock { width: min(280px, 78vw); }
+    .focus-clock strong { font-size: 36px; }
   }
 `
