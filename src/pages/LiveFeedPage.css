@@ -1,15 +1,15 @@
 /* Locked In — Live Feed (matches Leaderboard / clubhouse shell) */
 
 .lf-page {
-  --green-900: #13261b;
-  --green-800: #1c3526;
-  --green-700: #2c4a37;
-  --lime: #c8f04f;
-  --lime-soft: #eef4dc;
-  --cream: #f4f1e9;
+  --green-900: #0f1f3d;
+  --green-800: #17305c;
+  --green-700: #284a85;
+  --lime: #f4d35e;
+  --lime-soft: #fbf1cf;
+  --cream: #faf6ec;
   --card: #fffdf8;
   --border: #e3ddd0;
-  --text: #1b1d1a;
+  --text: #0f1c33;
   --muted: #6e6f68;
 
   width: 100vw;
@@ -56,7 +56,7 @@
 }
 
 .lf-logo {
-  font-family: Oswald, Inter, system-ui, sans-serif;
+  font-family: var(--font-display);
   font-size: 22px;
   font-weight: 600;
   color: #fff;
@@ -244,7 +244,7 @@
 .lf-avatar--me {
   background: var(--lime-soft);
   color: var(--green-900);
-  border: 1px solid #d5e3a8;
+  border: 1px solid #eedb9b;
 }
 
 .lf-composer__body {
@@ -266,7 +266,7 @@
   color: var(--text);
   font: inherit;
   line-height: 1.45;
-  outline-color: #48613c;
+  outline-color: #284a85;
 }
 
 .lf-composer__preview {
@@ -489,12 +489,12 @@
 }
 
 .lf-reaction:hover {
-  border-color: #c9d6a4;
+  border-color: #eedb9b;
   background: var(--lime-soft);
 }
 
 .lf-reaction--active {
-  border-color: #b7d45f;
+  border-color: #e8bf3a;
   background: var(--lime);
   color: var(--green-900);
 }
@@ -526,4 +526,13 @@
     width: 100%;
     justify-content: space-between;
   }
+}
+
+.lf-empty {
+  margin: 0;
+  padding: 28px 24px;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  color: var(--muted);
+  text-align: center;
 }

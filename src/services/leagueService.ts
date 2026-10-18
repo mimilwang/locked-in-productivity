@@ -149,3 +149,33 @@ export function getLeagueLogs(leagueId: number, userId?: number) {
   const query = userId ? `?userId=${userId}` : ''
   return apiRequest<ProgressLog[]>(`/leagues/${leagueId}/logs${query}`)
 }
+
+// ---------- Leaderboards ----------
+
+export type LeaderboardPeriod = 'daily' | 'weekly' | 'monthly' | 'total'
+
+export function getLeaderboard(leagueId: number, period: LeaderboardPeriod) {
+  return apiRequest<LeaderboardEntry[]>(`/leagues/${leagueId}/leaderboard?period=${period}`)
+}
+
+// ---------- Monthly results (MVP + Chud) ----------
+
+export type MonthlyResult = {
+  leagueId: number
+  month: string // "yyyy-MM"
+  mvp: LeaderboardEntry | null
+  chud: LeaderboardEntry | null
+  reward: string
+  punishment: string
+  standings: LeaderboardEntry[]
+  finalizedAt: string | null
+}
+
+/** Finalized results for a month, or null if that month hasn't been crowned yet. */
+export async function getMonthlyResult(leagueId: number, month: string): Promise<MonthlyResult | null> {
+  try {
+    return await apiRequest<MonthlyResult>(`/leagues/${leagueId}/monthly/${month}`)
+  } catch {
+    return null
+  }
+}
