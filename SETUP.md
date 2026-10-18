@@ -11,7 +11,7 @@
 - [ ] **Java 21 JDK**: Eclipse Temurin 21, https://adoptium.net (Mac: `brew install --cask temurin@21`)
 - [ ] **Maven**: `brew install maven` (check with `mvn -v`, should show Java 21)
 - [ ] **IntelliJ IDEA Community**: https://www.jetbrains.com/idea/download (best for Spring Boot)
-- [ ] Database: nothing to install for local development. H2 persists under `backend/data/`; use PostgreSQL for deployment.
+- [ ] Database: nothing to install for now (H2 runs in memory). PostgreSQL later for deployment.
 
 ## Frontend (Mimi, Jake)
 - [ ] **VS Code** extensions: ESLint, Prettier
@@ -28,7 +28,3 @@ npm run dev          # http://localhost:5173
 cd backend
 mvn spring-boot:run  # http://localhost:8080/swagger-ui.html
 ```
-
-For testing from a phone, open the frontend using your computer's LAN address (for example,
-`http://192.168.1.20:5173`). The backend accepts private-network development origins by default.
-In production, set `CORS_ALLOWED_ORIGIN_PATTERNS` to the exact frontend origin.

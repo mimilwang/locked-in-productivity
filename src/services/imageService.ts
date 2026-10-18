@@ -1,4 +1,6 @@
-import { API_URL, apiRequest } from './apiClient'
+import { apiRequest } from './apiClient'
+
+const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? 'http://localhost:8080'
 
 export function resolveImageUrl(url: string) {
   return url.startsWith('http') || url.startsWith('blob:') ? url : `${API_URL}${url}`
