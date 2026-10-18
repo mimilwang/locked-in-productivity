@@ -36,6 +36,13 @@
 .lf-card:nth-child(3n + 2) { border-left: 8px solid var(--green-700); }
 .lf-card:nth-child(3n) { border-left: 8px solid var(--lime); }
 
+/* Keep post content aligned as one column beneath the profile details. */
+.lf-card__detail,
+.lf-card__photo,
+.lf-reactions {
+  margin-left: 54px;
+}
+
 .lf-page *,
 .lf-page *::before,
 .lf-page *::after {
@@ -467,7 +474,7 @@
 }
 
 .lf-card__detail {
-  margin: 12px 0 0 54px;
+  margin: 22px 0 0 54px;
   color: var(--muted);
   line-height: 1.5;
 }
