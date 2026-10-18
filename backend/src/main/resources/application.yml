@@ -2,23 +2,23 @@ spring:
   application:
     name: locked-in
   datasource:
-    url: jdbc:h2:mem:lockedin;DB_CLOSE_DELAY=-1
-    username: sa
-    password:
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:lockedin;DB_CLOSE_DELAY=-1}
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
   jpa:
     hibernate:
       ddl-auto: update
     open-in-view: false
   h2:
     console:
-      enabled: true
+      enabled: ${H2_CONSOLE_ENABLED:true}
   servlet:
     multipart:
       max-file-size: 5MB
       max-request-size: 5MB
 
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 # Auth: replace the secret with an env variable before deploying (at least 32 characters).
 jwt:
@@ -28,14 +28,14 @@ jwt:
 auth:
   # TEMPORARY: lets you send "X-User-Id: 1" instead of a JWT while testing.
   # Set to false before deploying.
-  dev-header-enabled: true
+  dev-header-enabled: ${DEV_HEADER_ENABLED:true}
 
 app:
   cors:
-    allowed-origins: http://localhost:5173
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
 
 images:
-  upload-dir: uploads
+  upload-dir: ${UPLOAD_DIR:uploads}
 
 springdoc:
   swagger-ui:
