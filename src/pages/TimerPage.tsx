@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createFocusSession, getFocusSessions, saveFocusSession } from '../lib/sessionLog'
 import type { FocusSession } from '../lib/sessionLog'
+import { apiRequest } from '../services/apiClient'
+import { getActiveLeagueId } from '../services/leagueService'
+import AppSidebar from '../components/AppSidebar'
 
 const presets = [25, 45, 60]
 
@@ -17,6 +20,7 @@ export default function TimerPage() {
   const [startedAt, setStartedAt] = useState<Date | null>(null)
   const [lastSession, setLastSession] = useState<FocusSession | null>(() => getFocusSessions()[0] ?? null)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [syncError, setSyncError] = useState('')
   const deadlineRef = useRef<number | null>(null)
   const loggedRef = useRef(false)
 
@@ -33,6 +37,14 @@ export default function TimerPage() {
     setLastSession(session)
     setShowSuccess(true)
     setIsRunning(false)
+
+    const leagueId = getActiveLeagueId()
+    if (leagueId) {
+      void apiRequest('/logs', {
+        method: 'POST',
+        body: JSON.stringify({ leagueId, minutes: goalMinutes, note: 'Focus timer session' }),
+      }).catch((caught) => setSyncError(caught instanceof Error ? caught.message : 'Session saved on this device but could not sync.'))
+    }
   }
 
   useEffect(() => {
@@ -78,19 +90,10 @@ export default function TimerPage() {
     <div className="timer-page">
       <style>{timerStyles}</style>
 
-      <aside className="timer-sidebar">
-        <a className="timer-brand" href="/"><span>ϟ</span> LOCKED IN</a>
-        <nav>
-          <a href="/">▦ <span>Overview</span></a>
-          <a className="active" href="/timer">◷ <span>Focus timer</span></a>
-          <a href="/#leaderboard">▥ <span>Leaderboard</span></a>
-          <a href="/#awards">♕ <span>Monthly awards</span></a>
-        </nav>
-        <div className="timer-user"><i>AC</i><span><strong>Alex Chen</strong><small>12 day streak</small></span></div>
-      </aside>
+      <AppSidebar active="activity" />
 
       <main className="timer-main">
-        <header><span>THE 8 AM CLUB / FOCUS SESSION</span><a href="/">Back to overview →</a></header>
+        <header><span>THE 8 AM CLUB / FOCUS SESSION</span><a href="/overview">Back to overview →</a></header>
 
         <section className="timer-content">
           <div className="timer-heading">
@@ -103,9 +106,10 @@ export default function TimerPage() {
             <div className="session-success" role="status">
               <span>✓</span>
               <div><strong>Session complete — progress logged!</strong><small>+{lastSession?.points} points added to today’s score.</small></div>
-              <a href="/">View standings →</a>
+              <a href="/leaderboard">View standings →</a>
             </div>
           )}
+          {syncError && <div className="timer-sync-error" role="alert">{syncError}</div>}
 
           <div className="timer-layout">
             <section className="timer-card">
@@ -195,6 +199,7 @@ const timerStyles = `
   .session-success div { flex: 1; font-size: 11px; }
   .session-success small { margin-top: 3px; display: block; color: #73806f; }
   .session-success a { color: #405a34; font-size: 10px; text-decoration: none; }
+  .timer-sync-error { margin: 14px auto -8px; max-width: 760px; padding: 11px 14px; border: 1px solid #e1b2aa; border-radius: 5px; background: #fff0ed; color: #8d2e21; font-size: 10px; }
   .timer-layout { margin-top: 35px; display: grid; grid-template-columns: 1fr 280px; gap: 18px; align-items: start; }
   .timer-card, .session-sidebar section { border: 1px solid #dbddd2; border-radius: 8px; background: #fff; }
   .timer-card { padding: 26px 34px 24px; }

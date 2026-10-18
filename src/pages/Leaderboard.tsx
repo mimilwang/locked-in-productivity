@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './Leaderboard.css'
+import AppSidebar from '../components/AppSidebar'
 
 // ---------- Mock data (replace with real data from the backend later) ----------
 
@@ -27,8 +28,6 @@ const MEMBERS: Member[] = [
   { id: 'lm', name: 'Leo Martinez', goalDone: 2, streak: 3, consistency: 76, points: 640, todayPoints: 65 },
   { id: 'sw', name: 'Sam Wilson', goalDone: 2, streak: 2, consistency: 71, points: 520, todayPoints: 40 },
 ]
-
-const NAV_ITEMS = ['Overview', 'Daily check-in', 'Leaderboard', 'Monthly awards', 'Dare wheel']
 
 // ---------- Helpers ----------
 
@@ -76,41 +75,12 @@ export default function Leaderboard() {
   return (
     <div className="lb-page">
       {/* ---------- Sidebar ---------- */}
-      <aside className="lb-sidebar">
-        <div className="lb-logo">
-          <span aria-hidden>⚡</span> LOCKED IN
-        </div>
-
-        <p className="lb-eyebrow lb-eyebrow--dark">Your clubhouse</p>
-        <a className="lb-nav-link" href="#">
-          Your leagues
-        </a>
-
-        <p className="lb-eyebrow lb-eyebrow--dark">{LEAGUE.name}</p>
-        <nav aria-label="League">
-          {NAV_ITEMS.map((item) => (
-            <a
-              key={item}
-              href="#"
-              className={`lb-nav-link ${item === 'Leaderboard' ? 'lb-nav-link--active' : ''}`}
-              aria-current={item === 'Leaderboard' ? 'page' : undefined}
-            >
-              {item}
-            </a>
-          ))}
-        </nav>
-
-        <div className="lb-sidebar-note">
-          <p className="lb-eyebrow lb-eyebrow--lime">Better together</p>
-          <p>A little competition. A lot of showing up.</p>
-        </div>
-      </aside>
+      <AppSidebar active="leaderboard" />
 
       {/* ---------- Main ---------- */}
       <div className="lb-main">
         <header className="lb-topbar">
           <span>Your leagues / {LEAGUE.name} / Leaderboard</span>
-          <span>{dateLabel}</span>
         </header>
 
         <main className="lb-content">

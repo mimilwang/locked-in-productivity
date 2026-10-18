@@ -10,6 +10,8 @@ public interface LeagueMemberRepository extends JpaRepository<LeagueMember, Long
 
     boolean existsByLeagueIdAndUserId(Long leagueId, Long userId);
 
+    boolean existsByUserId(Long userId);
+
     Optional<LeagueMember> findByLeagueIdAndUserId(Long leagueId, Long userId);
 
     List<LeagueMember> findByLeagueIdOrderByJoinedAtAsc(Long leagueId);

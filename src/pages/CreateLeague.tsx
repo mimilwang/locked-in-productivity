@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import type { FormEvent, KeyboardEvent } from 'react'
 import './CreateLeague.css'
+import { apiRequest } from '../services/apiClient'
+import AppSidebar from '../components/AppSidebar'
 
 // Preset choices for the stakes. "custom" lets the creator type their own.
 const REWARDS = [
@@ -13,8 +15,6 @@ const PUNISHMENTS = [
   { id: 'wheel', title: 'Spin the dare wheel', detail: 'Low-stakes dares, chosen by the group.' },
   { id: 'snack', title: 'Bring the next group snack', detail: 'Keep it simple and affordable.' },
 ]
-
-const NAV_ITEMS = ['Overview', 'Daily check-in', 'Leaderboard', 'Monthly awards', 'Dare wheel']
 
 function initials(text: string) {
   return text
@@ -37,6 +37,8 @@ export default function CreateLeague() {
   const [customReward, setCustomReward] = useState('')
   const [punishment, setPunishment] = useState('wheel')
   const [customPunishment, setCustomPunishment] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
   function addInvite() {
     const email = inviteEmail.trim().toLowerCase()
@@ -57,12 +59,32 @@ export default function CreateLeague() {
     setInvites(invites.filter((i) => i !== email))
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     const rewardText = reward === 'custom' ? customReward : REWARDS.find((r) => r.id === reward)?.title
     const punishmentText =
       punishment === 'custom' ? customPunishment : PUNISHMENTS.find((p) => p.id === punishment)?.title
-    console.log({ name, goal, weeklyReset, invites, reward: rewardText, punishment: punishmentText })
+    setSubmitting(true)
+    setError('')
+    try {
+      await apiRequest('/leagues', {
+        method: 'POST',
+        body: JSON.stringify({
+          name,
+          goalDescription: goal,
+          goalType: 'TASKS',
+          weeklyTarget: 4,
+          durationWeeks: 4,
+          reward: rewardText,
+          punishment: punishmentText,
+        }),
+      })
+      window.location.assign('/overview')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not create your league.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const memberCount = invites.length + 1 // invited friends + you
@@ -70,30 +92,7 @@ export default function CreateLeague() {
   return (
     <div className="cl-page">
       {/* ---------- Sidebar ---------- */}
-      <aside className="cl-sidebar">
-        <div className="cl-logo">
-          <span aria-hidden>⚡</span> LOCKED IN
-        </div>
-
-        <p className="cl-eyebrow cl-eyebrow--dark">Your clubhouse</p>
-        <a className="cl-nav-link cl-nav-link--active" href="#" aria-current="page">
-          Your leagues
-        </a>
-
-        <p className="cl-eyebrow cl-eyebrow--dark">{name || 'New league'}</p>
-        <nav aria-label="League">
-          {NAV_ITEMS.map((item) => (
-            <a key={item} className="cl-nav-link" href="#">
-              {item}
-            </a>
-          ))}
-        </nav>
-
-        <div className="cl-sidebar-note">
-          <p className="cl-eyebrow cl-eyebrow--lime">Better together</p>
-          <p>A little competition. A lot of showing up.</p>
-        </div>
-      </aside>
+      <AppSidebar active="leagues" />
 
       {/* ---------- Main ---------- */}
       <div className="cl-main">
@@ -108,7 +107,7 @@ export default function CreateLeague() {
               <h1 className="cl-title">Build your starting lineup.</h1>
               <p className="cl-subtitle">One goal for everyone. A little friendly competition. Make it yours.</p>
             </div>
-            <button type="button" className="cl-btn cl-btn--ghost">
+            <button type="button" className="cl-btn cl-btn--ghost" onClick={() => window.location.assign('/overview')}>
               Cancel
             </button>
           </div>
@@ -321,9 +320,9 @@ export default function CreateLeague() {
           </div>
 
           <div className="cl-submit-bar">
-            <p className="cl-hint">Invites are private. Rewards and dares are always a group decision.</p>
-            <button type="submit" className="cl-btn cl-btn--primary">
-              Create league &amp; send invites →
+            <p className="cl-hint">{error || 'Invites are private. Rewards and dares are always a group decision.'}</p>
+            <button type="submit" className="cl-btn cl-btn--primary" disabled={submitting}>
+              {submitting ? 'Creating league…' : 'Create league & send invites →'}
             </button>
           </div>
         </form>

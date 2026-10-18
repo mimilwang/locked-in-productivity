@@ -408,6 +408,7 @@ export default function MonthlyReveal() {
 
   return (
     <div className={`mr-page mr-theme-${slide.theme}`}>
+      <a href="/overview" style={{ position: 'fixed', top: 22, left: 24, zIndex: 20, color: 'inherit', font: '700 12px system-ui', textDecoration: 'none' }}>← Dashboard</a>
       {/* Progress bars */}
       <div className="mr-progress" aria-hidden>
         {SLIDES.map((_, i) => (

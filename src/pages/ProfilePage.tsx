@@ -1,0 +1,50 @@
+import { useEffect, useState } from 'react'
+import { cachedUser, getMyProfile, logout } from '../services/authService'
+import type { UserProfile } from '../types/api'
+import AppSidebar from '../components/AppSidebar'
+
+function initials(name: string) {
+  return name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase()
+}
+
+export default function ProfilePage() {
+  const [profile, setProfile] = useState<UserProfile | null>(() => cachedUser())
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    getMyProfile().then(setProfile).catch((caught) => setError(caught instanceof Error ? caught.message : 'Could not load profile.'))
+  }, [])
+
+  return (
+    <div className="app-page-with-sidebar">
+      <AppSidebar active="profile" />
+      <main className="profile-page">
+        <style>{profileStyles}</style>
+        <section className="profile-shell">
+          {error && <div className="profile-error">{error}</div>}
+          {!profile ? <p>Loading profile…</p> : <>
+            <div className="profile-hero">
+              <div className="profile-avatar">{profile.photoUrl ? <img src={profile.photoUrl} alt="" /> : initials(profile.name)}</div>
+              <div><p>PLAYER PROFILE</p><h1>{profile.displayName}</h1><span>{profile.name} · {profile.email}</span></div>
+            </div>
+            <div className="profile-stats">
+              <article><span>CURRENT STREAK</span><strong>{profile.currentStreak}</strong><small>days</small></article>
+              <article><span>PERSONAL BEST</span><strong>{profile.bestStreak}</strong><small>days</small></article>
+              <article><span>BADGES</span><strong>{profile.badges.length}</strong><small>earned</small></article>
+              <article><span>TITLES</span><strong>{profile.titles.length}</strong><small>all time</small></article>
+            </div>
+            <div className="profile-grid">
+              <section><p>ACCOUNT DETAILS</p><dl><div><dt>Name</dt><dd>{profile.name}</dd></div><div><dt>Display name</dt><dd>{profile.displayName}</dd></div><div><dt>Email</dt><dd>{profile.email}</dd></div><div><dt>Time zone</dt><dd>{profile.timeZone.replaceAll('_', ' ')}</dd></div></dl></section>
+              <section><p>LEAGUE HISTORY</p>{profile.titles.length ? profile.titles.map((title) => <div className="profile-title" key={`${title.leagueId}-${title.month}`}><strong>{title.title === 'MVP' ? '🏆 MVP' : 'CHUD'}</strong><span>{title.leagueName} · {title.month}</span></div>) : <div className="profile-empty">No titles yet. This month is still yours.</div>}</section>
+            </div>
+            <button className="logout" onClick={logout}>Log out</button>
+          </>}
+        </section>
+      </main>
+    </div>
+  )
+}
+
+const profileStyles = `
+  *{box-sizing:border-box}body{margin:0;background:#f5f4ec}#root{width:100%;max-width:none;margin:0;border:0;text-align:left}.profile-page{min-height:100vh;background:#f5f4ec;color:#17231b;font-family:Inter,system-ui,sans-serif}.profile-page>header{height:68px;padding:0 clamp(20px,5vw,70px);display:flex;align-items:center;justify-content:space-between;background:#13271d}.profile-page>header a{color:#fff;text-decoration:none;font-size:11px}.profile-page>header a:first-child{font:800 20px Impact,sans-serif;letter-spacing:.05em}.profile-page>header b{color:#baff43;font-size:27px}.profile-shell{width:min(960px,calc(100% - 36px));margin:0 auto;padding:55px 0}.profile-hero{padding:34px;display:flex;gap:22px;align-items:center;border-radius:8px;background:#13271d;color:white}.profile-avatar{width:92px;height:92px;overflow:hidden;display:grid;place-items:center;border-radius:50%;background:#baff43;color:#17231b;font:800 28px Impact,sans-serif}.profile-avatar img{width:100%;height:100%;object-fit:cover}.profile-hero p,.profile-grid>section>p{margin:0;color:#9dcc42;font-size:9px;letter-spacing:.13em}.profile-hero h1{margin:8px 0 5px;color:white;font:800 45px Impact,sans-serif}.profile-hero span{color:#aebbb1;font-size:12px}.profile-stats{margin:18px 0;display:grid;grid-template-columns:repeat(4,1fr);border:1px solid #dbddd2;border-radius:7px;background:#fff}.profile-stats article{padding:22px;border-right:1px solid #e3e4dc}.profile-stats article:last-child{border:0}.profile-stats span{display:block;color:#7b827b;font-size:9px}.profile-stats strong{font:800 30px Impact,sans-serif}.profile-stats small{margin-left:5px;color:#7b827b}.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.profile-grid>section{padding:25px;border:1px solid #dbddd2;border-radius:7px;background:white}.profile-grid dl{margin:16px 0 0}.profile-grid dl div{padding:12px 0;display:flex;justify-content:space-between;border-top:1px solid #ecece7;font-size:11px}.profile-grid dt{color:#7b827b}.profile-grid dd{margin:0;font-weight:700}.profile-title,.profile-empty{margin-top:14px;padding:13px;border-radius:5px;background:#eff9da;font-size:11px}.profile-title{display:flex;justify-content:space-between}.profile-title span,.profile-empty{color:#6f786f}.logout{margin-top:20px;padding:11px 18px;border:1px solid #b8beb5;border-radius:5px;background:transparent;color:#334137;font-weight:800;cursor:pointer}.profile-error{padding:12px;background:#fff0ed;color:#8d2e21}@media(max-width:650px){.profile-stats{grid-template-columns:1fr 1fr}.profile-stats article:nth-child(2){border-right:0}.profile-grid{grid-template-columns:1fr}.profile-hero{align-items:flex-start}.profile-hero h1{font-size:34px}}
+`

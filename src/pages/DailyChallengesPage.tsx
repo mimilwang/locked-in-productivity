@@ -10,6 +10,7 @@ import {
   totalPointsFromCompletions,
 } from '../lib/dailyChallenges'
 import './DailyChallengesPage.css'
+import AppSidebar from '../components/AppSidebar'
 
 const DEMO_LEAGUE = {
   id: 'league-demo-locked-in',
@@ -146,12 +147,10 @@ export default function DailyChallengesPage() {
   }
 
   return (
-    <main className="daily-challenges">
-      <div className="daily-challenges__shell">
-        <a href="/" className="daily-challenges__logo" aria-label="Locked In home">
-          <span className="daily-challenges__logo-mark">L</span>
-          <span>LOCKED IN</span>
-        </a>
+    <div className="app-page-with-sidebar">
+      <AppSidebar active="challenges" />
+      <main className="daily-challenges">
+        <div className="daily-challenges__shell">
 
         <header className="daily-challenges__hero">
           <p className="daily-challenges__step">DAILY BOOST · TODAY</p>
@@ -214,7 +213,8 @@ export default function DailyChallengesPage() {
             MVP — keep it honest for the leaderboard.
           </p>
         </footer>
-      </div>
-    </main>
+        </div>
+      </main>
+    </div>
   )
 }

@@ -148,8 +148,10 @@
 
 .lf-content {
   flex: 1;
+  width: 100%;
   padding: 28px 32px 40px;
   max-width: 820px;
+  margin: 0 auto;
 }
 
 .lf-heading-row {

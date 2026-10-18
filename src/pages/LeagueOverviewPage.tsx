@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { getFocusSessions } from '../lib/sessionLog'
+import AppSidebar from '../components/AppSidebar'
 
 type Leader = {
   rank: number
@@ -29,46 +30,20 @@ const days = [
 ]
 
 export default function LeagueOverviewPage() {
-  const [checkedIn, setCheckedIn] = useState(false)
   const [focusSessions] = useState(() => getFocusSessions())
   const latestFocusSession = focusSessions[0]
-  const completed = checkedIn ? 18 : 17
+  const completed = 17 + Math.min(1, focusSessions.length)
   const weeklyPercent = Math.round((completed / 24) * 100)
 
   return (
     <div className="overview-page">
       <style>{pageStyles}</style>
 
-      <aside className="sidebar">
-        <a className="brand" href="/" aria-label="Locked In home">
-          <span className="brand-bolt">ϟ</span>
-          <span>LOCKED IN</span>
-        </a>
-
-        <nav className="nav" aria-label="Main navigation">
-          <p className="nav-label">YOUR LEAGUE</p>
-          <a className="nav-link active" href="#overview"><span>▦</span> Overview</a>
-          <a className="nav-link" href="/timer"><span>✓</span> Daily check-in</a>
-          <a className="nav-link" href="#leaderboard"><span>▥</span> Leaderboard</a>
-          <a className="nav-link" href="#awards"><span>♕</span> Monthly awards</a>
-          <a className="nav-link" href="#dare-wheel"><span>◎</span> Dare wheel</a>
-        </nav>
-
-        <div className="sidebar-note">
-          <strong>BETTER TOGETHER.</strong>
-          <p>A little competition. A lot of showing up.</p>
-        </div>
-
-        <div className="sidebar-profile">
-          <span className="avatar avatar-green">AC</span>
-          <span><strong>Alex Chen</strong><small>University of Washington</small></span>
-        </div>
-      </aside>
+      <AppSidebar active="dashboard" />
 
       <main className="main-shell" id="overview">
         <header className="topbar">
           <span>Clubhouse / The 8 AM Club</span>
-          <div className="topbar-actions"><span>OCT 17, 2026</span><button aria-label="Notifications">♢</button><span className="avatar avatar-small avatar-green">AC</span></div>
         </header>
 
         <div className="content">
@@ -78,9 +53,7 @@ export default function LeagueOverviewPage() {
               <h1>Lock in.</h1>
               <p className="subhead">Welcome back, Alex. Your people are showing up. You in?</p>
             </div>
-            <button className={checkedIn ? 'primary-button complete' : 'primary-button'} onClick={() => setCheckedIn(true)} disabled={checkedIn}>
-              {checkedIn ? 'Checked in today ✓' : 'Check in now →'}
-            </button>
+            <a className="primary-button" href="/timer">Check in now →</a>
           </section>
 
           <section className="league-hero">
@@ -111,7 +84,7 @@ export default function LeagueOverviewPage() {
             <section className="panel leaderboard-panel" id="leaderboard">
               <div className="panel-heading">
                 <div><p className="eyebrow">TODAY · LIVE</p><h2>Daily leaderboard</h2></div>
-                <a href="#full-leaderboard">Full leaderboard →</a>
+                <a href="/leaderboard">Full leaderboard →</a>
               </div>
               <div className="leader-list">
                 {leaders.map((leader) => (
@@ -139,7 +112,7 @@ export default function LeagueOverviewPage() {
 
               <div className="day-chart" aria-label="Daily group check-ins">
                 {days.map((item, index) => {
-                  const value = checkedIn && index === 5 ? item.value + 1 : item.value
+                  const value = focusSessions.length && index === 5 ? item.value + 1 : item.value
                   return (
                     <div className="day" key={item.day}>
                       <span className="bar-wrap"><span className={index === 6 ? 'bar future' : 'bar'} style={{ height: `${Math.max(value * 12, 5)}%` }} /></span>
@@ -162,7 +135,7 @@ export default function LeagueOverviewPage() {
               <span>12 days left in the season</span>
             </article>
             <article className="activity-card">
-              <div className="panel-heading"><h3>Recent activity</h3><a href="#all-activity">View all →</a></div>
+              <div className="panel-heading"><h3>Recent activity</h3><a href="/feed">View all →</a></div>
               {latestFocusSession ? (
                 <p><span className="avatar avatar-small avatar-green">AC</span><span><strong>You</strong> completed a {latestFocusSession.goalMinutes}-minute focus session<small>{new Date(latestFocusSession.completedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })} · +{latestFocusSession.points} pts</small></span></p>
               ) : (
@@ -196,20 +169,18 @@ const pageStyles = `
   .sidebar-note { margin-top: auto; padding: 17px; border: 1px solid #405247; border-radius: 6px; }
   .sidebar-note strong { color: #baff43; font-size: 10px; letter-spacing: .05em; }
   .sidebar-note p { margin: 8px 0 0; color: #aebbb1; font-size: 12px; line-height: 1.45; }
-  .sidebar-profile { margin-top: 32px; display: flex; align-items: center; gap: 10px; font-size: 12px; }
+  .sidebar-profile { margin-top: 32px; display: flex; align-items: center; gap: 10px; color: inherit; font-size: 12px; text-decoration: none; }
   .sidebar-profile small { display: block; color: #91a096; margin-top: 3px; font-size: 9px; }
   .avatar { width: 32px; height: 32px; flex: 0 0 auto; display: inline-grid; place-items: center; border-radius: 50%; color: #223020; font-size: 10px; border: 2px solid #f5f4ec; }
   .avatar-green { background: #baff43; }
   .avatar-small { width: 30px; height: 30px; font-size: 9px; }
   .main-shell { min-width: 0; }
   .topbar { height: 68px; padding: 0 35px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #dddcd2; color: #6f7770; font-size: 11px; }
-  .topbar-actions { display: flex; align-items: center; gap: 20px; font-size: 9px; letter-spacing: .04em; }
-  .topbar-actions button { border: 0; background: none; font-size: 20px; color: #17231b; cursor: pointer; }
   .content { padding: 38px 40px 20px; max-width: 1350px; margin: 0 auto; }
   .welcome { display: flex; align-items: flex-end; justify-content: space-between; gap: 30px; margin-bottom: 30px; }
   .welcome h1 { margin: 0 0 7px; color: #17231b; font: 800 clamp(35px, 4vw, 56px)/1 Impact, 'Arial Narrow', sans-serif; letter-spacing: .015em; }
   .subhead { margin: 0; color: #747a74; font-size: 13px; }
-  .primary-button { padding: 14px 20px; border: 0; border-radius: 5px; background: #baff43; color: #17231b; font-weight: 800; cursor: pointer; white-space: nowrap; }
+  .primary-button { padding: 14px 20px; border: 0; border-radius: 5px; background: #baff43; color: #17231b; font-weight: 800; cursor: pointer; white-space: nowrap; text-decoration: none; }
   .primary-button.complete { background: #dce8cd; color: #476044; cursor: default; }
   .league-hero { min-height: 230px; display: grid; grid-template-columns: 1fr 260px; overflow: hidden; border-radius: 8px; background: #13271d; color: white; }
   .league-hero-copy { padding: 34px; }
@@ -288,7 +259,6 @@ const pageStyles = `
     .nav, .sidebar-profile, .sidebar-note { display: none; }
     .topbar { height: 52px; padding: 0 18px; }
     .topbar > span { display: none; }
-    .topbar-actions { margin-left: auto; }
     .content { padding: 28px 18px 18px; }
     .welcome { align-items: stretch; flex-direction: column; }
     .league-hero { grid-template-columns: 1fr; }
