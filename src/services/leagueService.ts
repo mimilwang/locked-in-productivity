@@ -72,6 +72,10 @@ export type ProgressLog = {
   challengeId?: string | null
   bonusPoints?: number
   buddyUserId?: number | null
+  title: string | null
+  photoUrls: string[]
+  challengeId: string | null
+  bonusPoints: number
 }
 
 const ACTIVE_LEAGUE_KEY = 'locked-in:active-league-id'
