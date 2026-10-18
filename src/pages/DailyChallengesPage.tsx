@@ -13,10 +13,22 @@ import './DailyChallengesPage.css'
 import AppSidebar from '../components/AppSidebar'
 import { ApiError, apiRequest } from '../services/apiClient'
 import { cachedUser } from '../services/authService'
-import { getCachedLeague, getLeagueLogs } from '../services/leagueService'
+import {
+  getCachedLeague,
+  getLeagueLogs,
+  getLeagueMembers,
+} from '../services/leagueService'
+import type { LeagueMember } from '../services/leagueService'
 
 /** A log as the backend returns it, with the daily-challenge fields. */
-type ChallengeLog = { localDate: string; source: string; challengeId: string | null; note: string | null; endedAt: string | null }
+type ChallengeLog = {
+  localDate: string
+  source: string
+  challengeId: string | null
+  note: string | null
+  endedAt: string | null
+  buddyUserId?: number | null
+}
 
 function formatDisplayDate(dateKey: string): string {
   const [y, m, d] = dateKey.split('-').map(Number)
@@ -31,16 +43,20 @@ function formatDisplayDate(dateKey: string): string {
 function ChallengeCard({
   challenge,
   completed,
+  members,
   onComplete,
   onUndo,
 }: {
   challenge: Challenge
   completed: ChallengeCompletion | undefined
-  onComplete: (note: string) => void
+  members: LeagueMember[]
+  onComplete: (buddyUserId: number | null) => void
   onUndo: () => void
 }) {
-  const [note, setNote] = useState('')
+  const [buddyUserId, setBuddyUserId] = useState('')
   const isFun = challenge.size === 'fun'
+  const needsBuddy = challenge.requiresBuddy
+  const canComplete = !needsBuddy || buddyUserId !== ''
 
   return (
     <article
@@ -71,7 +87,7 @@ function ChallengeCard({
         <div className="challenge-card__done">
           <p className="challenge-card__done-label">Logged — points banked</p>
           {completed.note ? (
-            <p className="challenge-card__done-note">“{completed.note}”</p>
+            <p className="challenge-card__done-note">{completed.note}</p>
           ) : null}
           <button type="button" className="btn btn--ghost" onClick={onUndo}>
             Undo
@@ -79,22 +95,33 @@ function ChallengeCard({
         </div>
       ) : (
         <div className="challenge-card__actions">
-          {challenge.requiresBuddy && (
-            <label className="challenge-card__note">
-              <span>Who did you do this with? (optional)</span>
-              <input
-                type="text"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="e.g. Alex & Jordan"
-                maxLength={80}
-              />
-            </label>
-          )}
+          <label className="challenge-card__note">
+            <span>
+              Who did you do this with?
+              {needsBuddy ? ' (required)' : ' (optional)'}
+            </span>
+            <select
+              value={buddyUserId}
+              onChange={(e) => setBuddyUserId(e.target.value)}
+              required={needsBuddy}
+            >
+              <option value="">
+                {needsBuddy ? 'Select a member…' : 'None / solo'}
+              </option>
+              {members.map((member) => (
+                <option key={member.userId} value={member.userId}>
+                  {member.displayName}
+                </option>
+              ))}
+            </select>
+          </label>
           <button
             type="button"
             className="btn btn--primary"
-            onClick={() => onComplete(note.trim())}
+            disabled={!canComplete}
+            onClick={() =>
+              onComplete(buddyUserId ? Number(buddyUserId) : null)
+            }
           >
             Mark complete <span aria-hidden="true">→</span>
           </button>
@@ -108,9 +135,11 @@ export default function DailyChallengesPage() {
   const league = getCachedLeague()
   const leagueKey = league ? String(league.id) : 'no-league'
   const pair = getDailyChallenges(leagueKey)
+  const me = cachedUser()
   const [completions, setCompletions] = useState<ChallengeCompletion[]>(() =>
     loadCompletions(leagueKey, getDateKey()),
   )
+  const [members, setMembers] = useState<LeagueMember[]>([])
   const [error, setError] = useState('')
   const [saving, setSaving] = useState<string | null>(null)
   const [countdown, setCountdown] = useState(() =>
@@ -128,6 +157,15 @@ export default function DailyChallengesPage() {
     saveCompletions(leagueKey, pair.dateKey, completions)
   }, [completions, pair.dateKey, leagueKey])
 
+  useEffect(() => {
+    if (!league) return
+    getLeagueMembers(league.id)
+      .then((list) =>
+        setMembers(list.filter((m) => m.userId !== me?.id)),
+      )
+      .catch(() => setMembers([]))
+  }, [league?.id, me?.id])
+
   // The backend is the source of truth: mark challenges you already completed today (on any device).
   useEffect(() => {
     if (!league) return
@@ -135,7 +173,10 @@ export default function DailyChallengesPage() {
     getLeagueLogs(league.id, user?.id)
       .then((logs) => {
         const done = (logs as unknown as ChallengeLog[]).filter(
-          (log) => log.source === 'CHALLENGE' && log.localDate === pair.dateKey && log.challengeId,
+          (log) =>
+            log.source === 'CHALLENGE' &&
+            log.localDate === pair.dateKey &&
+            log.challengeId,
         )
         setCompletions(
           done.map((log) => ({
@@ -155,27 +196,56 @@ export default function DailyChallengesPage() {
   const pointsToday = totalPointsFromCompletions(completions, pair)
   const completedCount = [funDone, partyDone].filter(Boolean).length
 
-  function markDone(challengeId: string, note: string) {
+  function markDone(challengeId: string, note?: string) {
     setCompletions((prev) => {
       if (prev.some((c) => c.challengeId === challengeId)) return prev
-      return [...prev, { challengeId, completedAt: new Date().toISOString(), note: note || undefined }]
+      return [
+        ...prev,
+        {
+          challengeId,
+          completedAt: new Date().toISOString(),
+          note: note || undefined,
+        },
+      ]
     })
   }
 
   /** Saves the challenge to the league: bonus points on top + a completed activity on the leaderboard. */
-  async function completeChallenge(challenge: Challenge, note: string) {
+  async function completeChallenge(
+    challenge: Challenge,
+    buddyUserId: number | null,
+  ) {
     if (!league || saving) return
+    if (challenge.requiresBuddy && buddyUserId == null) {
+      setError('Pick a league member you did this with.')
+      return
+    }
     setSaving(challenge.id)
     setError('')
+    const buddyName = buddyUserId
+      ? members.find((m) => m.userId === buddyUserId)?.displayName
+      : undefined
+    const note = buddyName ? `with ${buddyName}` : undefined
     try {
       await apiRequest(`/leagues/${league.id}/challenges/complete`, {
         method: 'POST',
-        body: JSON.stringify({ challengeId: challenge.id, title: challenge.title, points: challenge.points, note: note || null }),
+        body: JSON.stringify({
+          challengeId: challenge.id,
+          title: challenge.title,
+          points: challenge.points,
+          buddyUserId,
+        }),
       })
       markDone(challenge.id, note)
     } catch (caught) {
-      if (caught instanceof ApiError && caught.status === 409) markDone(challenge.id, note) // already counted
-      else setError(caught instanceof Error ? caught.message : 'Could not save that challenge.')
+      if (caught instanceof ApiError && caught.status === 409)
+        markDone(challenge.id, note) // already counted
+      else
+        setError(
+          caught instanceof Error
+            ? caught.message
+            : 'Could not save that challenge.',
+        )
     } finally {
       setSaving(null)
     }
@@ -186,13 +256,22 @@ export default function DailyChallengesPage() {
     setSaving(challengeId)
     setError('')
     try {
-      await apiRequest(`/leagues/${league.id}/challenges/${encodeURIComponent(challengeId)}`, { method: 'DELETE' })
+      await apiRequest(
+        `/leagues/${league.id}/challenges/${encodeURIComponent(challengeId)}`,
+        { method: 'DELETE' },
+      )
       setCompletions((prev) => prev.filter((c) => c.challengeId !== challengeId))
     } catch (caught) {
       if (caught instanceof ApiError && caught.status === 404) {
-        setCompletions((prev) => prev.filter((c) => c.challengeId !== challengeId))
+        setCompletions((prev) =>
+          prev.filter((c) => c.challengeId !== challengeId),
+        )
       } else {
-        setError(caught instanceof Error ? caught.message : 'Could not undo that challenge.')
+        setError(
+          caught instanceof Error
+            ? caught.message
+            : 'Could not undo that challenge.',
+        )
       }
     } finally {
       setSaving(null)
@@ -204,79 +283,86 @@ export default function DailyChallengesPage() {
       <AppSidebar active="challenges" />
       <main className="daily-challenges">
         <div className="daily-challenges__shell">
+          <header className="daily-challenges__hero">
+            <p className="daily-challenges__step">DAILY BOOST · TODAY</p>
+            <h1 className="daily-challenges__title">Daily challenges</h1>
+            <p className="daily-challenges__subtitle">
+              Two ways to boost your score today — one casual, one all-in. Build
+              community and wellbeing beyond your league goal.
+            </p>
 
-        <header className="daily-challenges__hero">
-          <p className="daily-challenges__step">DAILY BOOST · TODAY</p>
-          <h1 className="daily-challenges__title">Daily challenges</h1>
-          <p className="daily-challenges__subtitle">
-            Two ways to boost your score today — one casual, one all-in. Build
-            community and wellbeing beyond your league goal.
-          </p>
-
-          <div className="daily-challenges__stats">
-            <div>
-              <span className="daily-challenges__stat-label">League</span>
-              <span className="daily-challenges__stat-value">
-                {league?.name ?? 'No league picked'}
-              </span>
+            <div className="daily-challenges__stats">
+              <div>
+                <span className="daily-challenges__stat-label">League</span>
+                <span className="daily-challenges__stat-value">
+                  {league?.name ?? 'No league picked'}
+                </span>
+              </div>
+              <div>
+                <span className="daily-challenges__stat-label">Today</span>
+                <span className="daily-challenges__stat-value">
+                  {formatDisplayDate(pair.dateKey)}
+                </span>
+              </div>
+              <div>
+                <span className="daily-challenges__stat-label">Resets in</span>
+                <span className="daily-challenges__stat-value daily-challenges__countdown">
+                  {countdown}
+                </span>
+              </div>
             </div>
-            <div>
-              <span className="daily-challenges__stat-label">Today</span>
-              <span className="daily-challenges__stat-value">
-                {formatDisplayDate(pair.dateKey)}
-              </span>
-            </div>
-            <div>
-              <span className="daily-challenges__stat-label">Resets in</span>
-              <span className="daily-challenges__stat-value daily-challenges__countdown">
-                {countdown}
-              </span>
-            </div>
-          </div>
-        </header>
+          </header>
 
-        {!league && (
-          <p className="daily-challenges__error" role="status">
-            Pick a league on <a href="/overview">Your leagues</a> so your challenge points count.
-          </p>
-        )}
-        {error && (
-          <p className="daily-challenges__error" role="alert">
-            {error}
-          </p>
-        )}
+          {!league && (
+            <p className="daily-challenges__error" role="status">
+              Pick a league on <a href="/overview">Your leagues</a> so your
+              challenge points count.
+            </p>
+          )}
+          {error && (
+            <p className="daily-challenges__error" role="alert">
+              {error}
+            </p>
+          )}
 
-        <section className="daily-challenges__progress" aria-live="polite">
-          <p>
-            <strong>{completedCount}/2</strong> challenges logged ·{' '}
-            <strong>+{pointsToday}</strong> pts today
-          </p>
-        </section>
+          <section className="daily-challenges__progress" aria-live="polite">
+            <p>
+              <strong>{completedCount}/2</strong> challenges logged ·{' '}
+              <strong>+{pointsToday}</strong> pts today
+            </p>
+          </section>
 
-        <section
-          className="daily-challenges__grid"
-          aria-label="Today's challenges"
-        >
-          <ChallengeCard
-            challenge={pair.fun}
-            completed={funDone}
-            onComplete={(note) => void completeChallenge(pair.fun, note)}
-            onUndo={() => void undoChallenge(pair.fun.id)}
-          />
-          <ChallengeCard
-            challenge={pair.party}
-            completed={partyDone}
-            onComplete={(note) => void completeChallenge(pair.party, note)}
-            onUndo={() => void undoChallenge(pair.party.id)}
-          />
-        </section>
+          <section
+            className="daily-challenges__grid"
+            aria-label="Today's challenges"
+          >
+            <ChallengeCard
+              challenge={pair.fun}
+              completed={funDone}
+              members={members}
+              onComplete={(buddyUserId) =>
+                void completeChallenge(pair.fun, buddyUserId)
+              }
+              onUndo={() => void undoChallenge(pair.fun.id)}
+            />
+            <ChallengeCard
+              challenge={pair.party}
+              completed={partyDone}
+              members={members}
+              onComplete={(buddyUserId) =>
+                void completeChallenge(pair.party, buddyUserId)
+              }
+              onUndo={() => void undoChallenge(pair.party.id)}
+            />
+          </section>
 
-        <footer className="daily-challenges__footer">
-          <p>
-            Challenges rotate at midnight. Bonus points go on top of your weekly goal score and show on the
-            leaderboard. Completions are self-reported, so keep it honest.
-          </p>
-        </footer>
+          <footer className="daily-challenges__footer">
+            <p>
+              Challenges rotate at midnight. Bonus points go on top of your weekly
+              goal score and show on the leaderboard. Completions are
+              self-reported, so keep it honest.
+            </p>
+          </footer>
         </div>
       </main>
     </div>
