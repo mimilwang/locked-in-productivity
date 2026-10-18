@@ -9,6 +9,7 @@ export type SignUpInput = {
   email: string
   password: string
   timeZone: string
+  school?: string
   photoUrl?: string
 }
 
@@ -50,6 +51,16 @@ export async function signUp(input: SignUpInput) {
 export async function getMyProfile() {
   const profile = await apiRequest<UserProfile>('/users/me')
   window.localStorage.setItem(USER_KEY, JSON.stringify(profile))
+  return profile
+}
+
+export async function updateMyProfile(input: Partial<Pick<UserProfile, 'name' | 'displayName' | 'school' | 'timeZone' | 'photoUrl'>>) {
+  const profile = await apiRequest<UserProfile>('/users/me', {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  })
+  window.localStorage.setItem(USER_KEY, JSON.stringify(profile))
+  window.dispatchEvent(new CustomEvent('locked-in:profile-updated', { detail: profile }))
   return profile
 }
 

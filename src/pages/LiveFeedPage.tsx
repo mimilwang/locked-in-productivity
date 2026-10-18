@@ -10,6 +10,8 @@ import {
 import type { FeedActivity, ReactionEmoji } from '../types/feed'
 import './LiveFeedPage.css'
 import AppSidebar from '../components/AppSidebar'
+import { cachedUser } from '../services/authService'
+import { getCachedLeague } from '../services/leagueService'
 
 const REACTION_OPTIONS: ReactionEmoji[] = ['🔥', '👏', '💀', '🔒']
 
@@ -40,25 +42,30 @@ function typeLabel(type: FeedActivity['type']) {
 function ActivityCard({
   activity,
   currentUserId,
+  currentUserName,
   onReact,
 }: {
   activity: FeedActivity
   currentUserId: string
+  currentUserName: string
   onReact: (activityId: string, emoji: ReactionEmoji) => void
 }) {
   const myReaction = activity.reactions.find((r) =>
     r.userIds.includes(currentUserId),
   )?.emoji
+  const actorName = activity.actor.id === currentUserId || activity.actor.id === FEED_LEAGUE.currentUserId
+    ? currentUserName
+    : activity.actor.name
 
   return (
     <article className="lf-card">
       <header className="lf-card__header">
         <div className="lf-avatar" aria-hidden>
-          {initials(activity.actor.name)}
+          {initials(actorName)}
         </div>
         <div className="lf-card__meta">
           <p className="lf-card__who">
-            <strong>{activity.actor.name}</strong> {activity.headline}
+            <strong>{actorName}</strong> {activity.headline}
           </p>
           <p className="lf-card__when">
             <span className="lf-type">{typeLabel(activity.type)}</span>
@@ -110,10 +117,13 @@ function ActivityCard({
 }
 
 export default function LiveFeedPage() {
-  const me = useMemo(
-    () => FEED_MEMBERS.find((m) => m.id === FEED_LEAGUE.currentUserId)!,
-    [],
-  )
+  const me = useMemo(() => {
+    const user = cachedUser()
+    return user
+      ? { id: String(user.id), name: user.displayName || user.name }
+      : FEED_MEMBERS.find((member) => member.id === FEED_LEAGUE.currentUserId)!
+  }, [])
+  const league = useMemo(() => getCachedLeague(), [])
 
   const [activities, setActivities] = useState<FeedActivity[]>(() =>
     getFeedActivities(FEED_LEAGUE.id),
@@ -134,7 +144,7 @@ export default function LiveFeedPage() {
 
   function handleReact(activityId: string, emoji: ReactionEmoji) {
     setActivities(
-      toggleReaction(activityId, FEED_LEAGUE.currentUserId, emoji, FEED_LEAGUE.id),
+      toggleReaction(activityId, me.id, emoji, FEED_LEAGUE.id),
     )
   }
 
@@ -177,14 +187,14 @@ export default function LiveFeedPage() {
       <div className="lf-main">
         <header className="lf-topbar">
           <span>
-            Your leagues / {FEED_LEAGUE.name} / Live feed
+            Your leagues / {league?.name || FEED_LEAGUE.name} / Live feed
           </span>
         </header>
 
         <main className="lf-content">
           <div className="lf-heading-row">
             <div>
-              <p className="lf-eyebrow">{FEED_LEAGUE.name} / Activity</p>
+              <p className="lf-eyebrow">{league?.name || FEED_LEAGUE.name} / Activity</p>
               <h1 className="lf-title">The league never sleeps.</h1>
               <p className="lf-subtitle">
                 See who&apos;s logging, reacting, and showing receipts — then
@@ -250,7 +260,8 @@ export default function LiveFeedPage() {
               <ActivityCard
                 key={activity.id}
                 activity={activity}
-                currentUserId={FEED_LEAGUE.currentUserId}
+                currentUserId={me.id}
+                currentUserName={me.name}
                 onReact={handleReact}
               />
             ))}
