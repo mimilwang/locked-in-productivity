@@ -11,5 +11,6 @@ public record CompleteChallengeRequest(
         @NotBlank @Size(max = 60) String challengeId,
         @NotBlank @Size(max = 100) String title,
         @NotNull @Min(1) @Max(100) Integer points,
-        @Size(max = 1000) String note) {
+        @Size(max = 1000) String note,
+        Long buddyUserId) {
 }

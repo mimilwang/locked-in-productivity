@@ -68,6 +68,13 @@ public class ProgressLog {
     /** For CHALLENGE logs: bonus points added on top of the weekly goal score. */
     private Integer bonusPoints; // null on older rows = 0
 
+    /**
+     * For CHALLENGE logs: the other league member who shared this challenge (if any).
+     * Used so undo can remove both linked completions.
+     */
+    @Column(name = "buddy_user_id")
+    private Long buddyUserId;
+
     /** Up to 4 photos, as URLs returned by POST /images. */
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "progress_log_photos", joinColumns = @JoinColumn(name = "log_id"))
@@ -100,9 +107,17 @@ public class ProgressLog {
     /** A completed daily challenge: no minutes, a fixed bonus. */
     public static ProgressLog challenge(Long userId, Long leagueId, Instant now, LocalDate localDate,
                                         String challengeId, String title, String note, int bonusPoints) {
+        return challenge(userId, leagueId, now, localDate, challengeId, title, note, bonusPoints, null);
+    }
+
+    /** A completed daily challenge shared with a buddy. */
+    public static ProgressLog challenge(Long userId, Long leagueId, Instant now, LocalDate localDate,
+                                        String challengeId, String title, String note, int bonusPoints,
+                                        Long buddyUserId) {
         ProgressLog log = new ProgressLog(userId, leagueId, now, now, 0, LogSource.CHALLENGE, localDate, title, note, null);
         log.challengeId = challengeId;
         log.bonusPoints = bonusPoints;
+        log.buddyUserId = buddyUserId;
         return log;
     }
 
@@ -165,5 +180,9 @@ public class ProgressLog {
 
     public int getBonusPoints() {
         return bonusPoints == null ? 0 : bonusPoints;
+    }
+
+    public Long getBuddyUserId() {
+        return buddyUserId;
     }
 }

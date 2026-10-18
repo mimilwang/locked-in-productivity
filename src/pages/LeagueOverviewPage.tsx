@@ -60,8 +60,18 @@ export default function LeagueOverviewPage({ league, leagues, onSelectLeague, on
   const recentLogs = [...finishedLogs]
     .sort((a, b) => new Date(b.endedAt ?? b.startedAt).getTime() - new Date(a.endedAt ?? a.startedAt).getTime())
     .slice(0, 3)
-  const describeLog = (log: ProgressLog) =>
-    league.goalType === 'TIME' ? `logged ${log.durationMinutes} minutes` : 'completed a task'
+  const describeLog = (log: ProgressLog) => {
+    if (log.source === 'CHALLENGE') {
+      const title = log.title?.trim() || 'a daily challenge'
+      const pts = log.bonusPoints ?? 0
+      return pts > 0
+        ? `completed “${title}” (+${pts} pts)`
+        : `completed “${title}”`
+    }
+    return league.goalType === 'TIME'
+      ? `logged ${log.durationMinutes} minutes`
+      : 'completed a task'
+  }
 
   // This week's chart: how many logs landed on each day (Mon-Sun). All zeros until someone logs.
   const today = localToday()

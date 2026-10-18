@@ -10,6 +10,7 @@ import com.lockedin.account.auth.AuthService;
 import com.lockedin.common.ApiException;
 import com.lockedin.league.GoalType;
 import com.lockedin.league.LeagueService;
+import com.lockedin.league.dto.JoinLeagueRequest;
 import com.lockedin.progress.dto.CompleteChallengeRequest;
 import com.lockedin.progress.dto.LogResponse;
 import com.lockedin.progress.dto.ManualLogRequest;
@@ -82,7 +83,7 @@ class ProgressServiceTest {
 
     @Test
     void dailyChallengeGivesBonusPointsOnTopInTimeLeagues() {
-        progress.completeChallenge(me, leagueId, new CompleteChallengeRequest("fun-walk-buddy", "Buddy walk", 15, null));
+        progress.completeChallenge(me, leagueId, new CompleteChallengeRequest("fun-walk-buddy", "Buddy walk", 15, null, null));
         var row = leaderboards.leaderboard(me, leagueId, LeaderboardPeriod.WEEKLY).get(0);
         assertEquals(15, row.points());
         assertEquals(0, row.weeklyPercent()); // no goal progress in a TIME league
@@ -92,19 +93,77 @@ class ProgressServiceTest {
     @Test
     void dailyChallengeCountsAsATaskInTaskLeagues() {
         Long taskLeague = leagues.create(me, TestFixtures.league(GoalType.TASKS, 4)).id();
-        progress.completeChallenge(me, taskLeague, new CompleteChallengeRequest("fun-journal-15", "Quick journal", 15, "felt good"));
+        progress.completeChallenge(me, taskLeague, new CompleteChallengeRequest("fun-journal-15", "Quick journal", 15, "felt good", null));
         assertEquals(40, leaderboards.leaderboard(me, taskLeague, LeaderboardPeriod.WEEKLY).get(0).points());
     }
 
     @Test
     void dailyChallengeOnlyOncePerDayAndCanBeUndone() {
-        CompleteChallengeRequest walk = new CompleteChallengeRequest("fun-walk-buddy", "Buddy walk", 15, null);
+        CompleteChallengeRequest walk = new CompleteChallengeRequest("fun-walk-buddy", "Buddy walk", 15, null, null);
         progress.completeChallenge(me, leagueId, walk);
         ApiException e = assertThrows(ApiException.class, () -> progress.completeChallenge(me, leagueId, walk));
         assertEquals(HttpStatus.CONFLICT, e.getStatus());
 
         progress.undoChallenge(me, leagueId, "fun-walk-buddy");
         assertEquals(0, myWeeklyPoints());
+    }
+
+    @Test
+    void dailyChallengeWithBuddyAwardsPointsToBoth() {
+        Long buddy = TestFixtures.newUser(auth, "Buddy");
+        String code = leagues.get(me, leagueId).inviteCode();
+        leagues.join(buddy, new JoinLeagueRequest(code, null, true));
+
+        progress.completeChallenge(me, leagueId,
+                new CompleteChallengeRequest("fun-walk-buddy", "Buddy walk", 15, null, buddy));
+
+        assertEquals(15, myWeeklyPoints());
+        assertEquals(15, leaderboards.leaderboard(buddy, leagueId, LeaderboardPeriod.WEEKLY).stream()
+                .filter(r -> r.userId().equals(buddy)).findFirst().orElseThrow().points());
+    }
+
+    @Test
+    void dailyChallengeWithoutBuddyAwardsOnlyCompleter() {
+        Long buddy = TestFixtures.newUser(auth, "SoloBuddy");
+        String code = leagues.get(me, leagueId).inviteCode();
+        leagues.join(buddy, new JoinLeagueRequest(code, null, true));
+
+        progress.completeChallenge(me, leagueId,
+                new CompleteChallengeRequest("party-host-dinner", "Host a dinner", 75, null, null));
+
+        assertEquals(75, myWeeklyPoints());
+        assertEquals(0, leaderboards.leaderboard(buddy, leagueId, LeaderboardPeriod.WEEKLY).stream()
+                .filter(r -> r.userId().equals(buddy)).findFirst().orElseThrow().points());
+    }
+
+    @Test
+    void dailyChallengeRejectsSelfAsBuddy() {
+        ApiException e = assertThrows(ApiException.class, () -> progress.completeChallenge(me, leagueId,
+                new CompleteChallengeRequest("fun-walk-buddy", "Buddy walk", 15, null, me)));
+        assertEquals(HttpStatus.BAD_REQUEST, e.getStatus());
+    }
+
+    @Test
+    void dailyChallengeRejectsNonMemberBuddy() {
+        Long stranger = TestFixtures.newUser(auth, "StrangerBuddy");
+        ApiException e = assertThrows(ApiException.class, () -> progress.completeChallenge(me, leagueId,
+                new CompleteChallengeRequest("fun-walk-buddy", "Buddy walk", 15, null, stranger)));
+        assertEquals(HttpStatus.FORBIDDEN, e.getStatus());
+    }
+
+    @Test
+    void undoingChallengeAlsoRemovesBuddyPoints() {
+        Long buddy = TestFixtures.newUser(auth, "UndoBuddy");
+        String code = leagues.get(me, leagueId).inviteCode();
+        leagues.join(buddy, new JoinLeagueRequest(code, null, true));
+
+        progress.completeChallenge(me, leagueId,
+                new CompleteChallengeRequest("fun-walk-buddy", "Buddy walk", 15, null, buddy));
+        progress.undoChallenge(me, leagueId, "fun-walk-buddy");
+
+        assertEquals(0, myWeeklyPoints());
+        assertEquals(0, leaderboards.leaderboard(buddy, leagueId, LeaderboardPeriod.WEEKLY).stream()
+                .filter(r -> r.userId().equals(buddy)).findFirst().orElseThrow().points());
     }
 
     @Test

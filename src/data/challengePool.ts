@@ -103,7 +103,7 @@ export const PARTY_CHALLENGES: Challenge[] = [
     size: 'party',
     points: 75,
     category: 'social',
-    requiresBuddy: true,
+    requiresBuddy: false,
   },
   {
     id: 'party-group-walk',

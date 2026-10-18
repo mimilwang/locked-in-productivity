@@ -7,6 +7,7 @@ import com.lockedin.league.GoalType;
 import com.lockedin.league.League;
 import com.lockedin.league.LeagueMember;
 import com.lockedin.league.LeagueService;
+import com.lockedin.progress.LogSource;
 import com.lockedin.progress.ProgressLog;
 import com.lockedin.progress.ProgressLogRepository;
 import com.lockedin.scoring.dto.LeaderboardEntry;
@@ -127,8 +128,10 @@ public class LeaderboardService {
         Map<Long, Integer> tasks = new HashMap<>();
         Map<Long, Set<LocalDate>> activeDays = new HashMap<>();
         for (ProgressLog log : logs.findCompletedByLeagueId(league.getId())) {
-            if (ScoringEngine.amountFor(league.getGoalType(), log.getDurationMinutes()) <= 0) {
-                continue; // e.g. a 0-minute timer in a TIME league
+            boolean challenge = log.getSource() == LogSource.CHALLENGE;
+            // Skip empty timers in TIME leagues, but still count challenge completions as activities.
+            if (!challenge && ScoringEngine.amountFor(league.getGoalType(), log.getDurationMinutes()) <= 0) {
+                continue;
             }
             activeDays.computeIfAbsent(log.getUserId(), id -> new HashSet<>()).add(log.getLocalDate());
             if (!log.getLocalDate().isBefore(from) && !log.getLocalDate().isAfter(to)) {

@@ -64,10 +64,14 @@ export type ProgressLog = {
   startedAt: string
   endedAt: string | null
   durationMinutes: number
-  source: 'TIMER' | 'MANUAL'
+  source: 'TIMER' | 'MANUAL' | 'CHALLENGE'
   localDate: string
   note: string | null
   running: boolean
+  title?: string | null
+  challengeId?: string | null
+  bonusPoints?: number
+  buddyUserId?: number | null
 }
 
 const ACTIVE_LEAGUE_KEY = 'locked-in:active-league-id'

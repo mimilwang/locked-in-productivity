@@ -108,6 +108,7 @@ public class ProgressService {
     /**
      * Daily challenge done: saved as an activity with bonus points (on top of the weekly cap).
      * In TASKS leagues it also counts as 1 task. Once per challenge per day.
+     * If buddyUserId is set, that league member also gets the same bonus (unless they already completed it today).
      */
     @Transactional
     public LogResponse completeChallenge(Long me, Long leagueId, CompleteChallengeRequest request) {
@@ -119,21 +120,53 @@ public class ProgressService {
         if (logs.findFirstByUserIdAndLeagueIdAndChallengeIdAndLocalDate(me, leagueId, challengeId, today).isPresent()) {
             throw ApiException.conflict("You already completed this challenge today");
         }
+
+        Long buddyUserId = request.buddyUserId();
         String note = request.note() == null || request.note().isBlank() ? null : request.note().trim();
-        ProgressLog log = logs.save(ProgressLog.challenge(me, leagueId, clock.instant(), today, challengeId,
-                request.title().trim(), note, request.points()));
+        Instant now = clock.instant();
+        String title = request.title().trim();
+        int points = request.points();
+
+        if (buddyUserId != null) {
+            if (buddyUserId.equals(me)) {
+                throw ApiException.badRequest("Pick a different league member as your buddy");
+            }
+            leagueService.requireMember(leagueId, buddyUserId);
+            String buddyName = userService.get(buddyUserId).getDisplayName();
+            note = "with " + buddyName;
+            ProgressLog mine = logs.save(ProgressLog.challenge(me, leagueId, now, today, challengeId,
+                    title, note, points, buddyUserId));
+            if (logs.findFirstByUserIdAndLeagueIdAndChallengeIdAndLocalDate(buddyUserId, leagueId, challengeId, today).isEmpty()) {
+                String myName = userService.get(me).getDisplayName();
+                logs.save(ProgressLog.challenge(buddyUserId, leagueId, now, today, challengeId,
+                        title, "with " + myName, points, me));
+            }
+            scoringService.recalculateLeague(leagueId);
+            return LogResponse.from(mine);
+        }
+
+        ProgressLog log = logs.save(ProgressLog.challenge(me, leagueId, now, today, challengeId,
+                title, note, points));
         scoringService.recalculateLeague(leagueId);
         return LogResponse.from(log);
     }
 
-    /** Undo today's completion of a daily challenge. */
+    /** Undo today's completion of a daily challenge (and the linked buddy log, if any). */
     @Transactional
     public void undoChallenge(Long me, Long leagueId, String challengeId) {
         leagueService.requireMember(leagueId, me);
         LocalDate today = TimeUtils.today(clock, userService.zoneOf(me));
         ProgressLog log = logs.findFirstByUserIdAndLeagueIdAndChallengeIdAndLocalDate(me, leagueId, challengeId, today)
                 .orElseThrow(() -> ApiException.notFound("You haven't completed this challenge today"));
+        Long buddyUserId = log.getBuddyUserId();
         logs.delete(log);
+        if (buddyUserId != null) {
+            // Only remove the buddy's log if it was awarded from this shared completion
+            // (their buddyUserId points back at the completer), not an independent one.
+            logs.findFirstByUserIdAndLeagueIdAndChallengeIdAndLocalDate(buddyUserId, leagueId, challengeId, today)
+                    .filter(buddyLog -> me.equals(buddyLog.getBuddyUserId()))
+                    .ifPresent(logs::delete);
+        }
         scoringService.recalculateLeague(leagueId);
     }
 
