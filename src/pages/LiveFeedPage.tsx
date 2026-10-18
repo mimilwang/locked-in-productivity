@@ -7,12 +7,11 @@ import AppSidebar from '../components/AppSidebar'
 import { cachedUser, getMyProfile } from '../services/authService'
 import { getCachedLeague, getLeagueLogs, getLeagueMembers } from '../services/leagueService'
 import type { League, LeagueMember, ProgressLog } from '../services/leagueService'
-import { apiRequest } from '../services/apiClient'
+import { API_URL, apiRequest } from '../services/apiClient'
 import { createFeedPost, createFeedReply, getFeed, toggleFeedReaction } from '../services/feedService'
 import type { FeedStateDto } from '../services/feedService'
 import type { UserProfile } from '../types/api'
 
-const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? 'http://localhost:8080'
 const imageSrc = (url: string) => (url.startsWith('http') ? url : `${API_URL}${url}`)
 
 const REACTION_OPTIONS: ReactionEmoji[] = ['🔥', '👏', '💀', '🔒']
