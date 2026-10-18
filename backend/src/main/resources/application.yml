@@ -2,7 +2,8 @@ spring:
   application:
     name: locked-in
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:lockedin;DB_CLOSE_DELAY=-1}
+    # Persistent local default. Production should set SPRING_DATASOURCE_URL to PostgreSQL.
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:file:./data/lockedin;DB_CLOSE_ON_EXIT=FALSE}
     username: ${SPRING_DATASOURCE_USERNAME:sa}
     password: ${SPRING_DATASOURCE_PASSWORD:}
   jpa:
@@ -32,7 +33,9 @@ auth:
 
 app:
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+    # Comma-separated origin patterns. Defaults cover Vite on this computer and phones
+    # reaching it over a private LAN. Set this explicitly to the frontend URL in production.
+    allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://127.0.0.1:*,http://192.168.*:*,http://10.*:*,http://172.*:*}
 
 images:
   upload-dir: ${UPLOAD_DIR:uploads}

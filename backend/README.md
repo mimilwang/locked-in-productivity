@@ -9,12 +9,15 @@ mvn test                                               # run all tests
 ```
 - API: http://localhost:8080
 - Swagger (docs + try every endpoint): http://localhost:8080/swagger-ui.html
-- Database viewer: http://localhost:8080/h2-console (JDBC URL `jdbc:h2:mem:lockedin`, user `sa`, no password)
+- Database viewer: http://localhost:8080/h2-console (JDBC URL `jdbc:h2:file:./data/lockedin`, user `sa`, no password)
 
 Demo mode logins: `renee@lockedin.dev`, `mimi@lockedin.dev`, `jake@lockedin.dev`, `shreya@lockedin.dev`,
 `alex@lockedin.dev`, all with password `password123`. The console prints the league id and invite code.
 
-The H2 database lives in memory, so it resets every time the app restarts.
+The local H2 database persists in `backend/data/`, so accounts, posts, and uploaded images survive restarts.
+For deployment, set `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, and
+`SPRING_DATASOURCE_PASSWORD` to a persistent PostgreSQL database. Also set
+`CORS_ALLOWED_ORIGIN_PATTERNS` to the deployed frontend origin.
 
 ## Logging in from the frontend
 1. `POST /auth/signup` or `POST /auth/login` returns `{ "token": "...", "user": {...} }`.

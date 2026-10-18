@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ChangeEvent, CSSProperties, FormEvent } from 'react'
-import { apiRequest } from '../services/apiClient'
+import { API_URL, apiRequest } from '../services/apiClient'
 import { cachedUser } from '../services/authService'
 import { getCachedLeague, getLeagueLogs, getLeagueOverview } from '../services/leagueService'
 import type { LeagueOverviewData, ProgressLog } from '../services/leagueService'
 import AppSidebar from '../components/AppSidebar'
 
 // Uploaded images come back as "/images/abc.png"; show them from the backend's address.
-const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? 'http://localhost:8080'
 const imageSrc = (url: string) => (url.startsWith('http') ? url : `${API_URL}${url}`)
 
 const MAX_PHOTOS = 4
