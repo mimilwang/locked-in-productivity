@@ -34,12 +34,27 @@ export default function ProfilePage() {
     setUploading(true)
     setError('')
     try {
+      // Upload bytes, then immediately attach the URL to the user profile so other devices see it
+      // without waiting for "Save changes" on the rest of the form.
       const uploaded = await uploadImage(file)
+      const updated = await updateMyProfile({ photoUrl: uploaded.url })
+      setProfile(updated)
       setDraft((current) => ({ ...current, photoUrl: uploaded.url }))
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not upload your profile picture.')
     } finally {
       setUploading(false)
+    }
+  }
+
+  async function removePhoto() {
+    setError('')
+    try {
+      const updated = await updateMyProfile({ photoUrl: '' })
+      setProfile(updated)
+      setDraft((current) => ({ ...current, photoUrl: '' }))
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not remove your profile picture.')
     }
   }
 
@@ -75,7 +90,7 @@ export default function ProfilePage() {
               <label>Display name<input value={draft.displayName} onChange={(event) => setDraft({ ...draft, displayName: event.target.value })} required /></label>
               <label>School<input value={draft.school} onChange={(event) => setDraft({ ...draft, school: event.target.value })} placeholder="University of Washington" /></label>
               <label>Time zone<input value={draft.timeZone} onChange={(event) => setDraft({ ...draft, timeZone: event.target.value })} required /></label>
-              <div className="profile-photo-editor profile-edit-wide"><div className="profile-photo-preview">{draft.photoUrl ? <img src={resolveImageUrl(draft.photoUrl)} alt="Profile preview" /> : initials(draft.name)}</div><div><strong>Profile picture</strong><p>JPG, PNG, or WEBP · up to 5MB</p><label className="profile-photo-button">{uploading ? 'Uploading…' : 'Choose photo'}<input type="file" accept="image/jpeg,image/png,image/webp" onChange={changePhoto} disabled={uploading} /></label>{draft.photoUrl && <button type="button" className="profile-photo-remove" onClick={() => setDraft({ ...draft, photoUrl: '' })}>Remove</button>}</div></div>
+              <div className="profile-photo-editor profile-edit-wide"><div className="profile-photo-preview">{draft.photoUrl ? <img src={resolveImageUrl(draft.photoUrl)} alt="Profile preview" /> : initials(draft.name)}</div><div><strong>Profile picture</strong><p>JPG, PNG, or WEBP · up to 5MB · saved to your profile when you choose a photo</p><label className="profile-photo-button">{uploading ? 'Uploading…' : 'Choose photo'}<input type="file" accept="image/jpeg,image/png,image/webp" onChange={changePhoto} disabled={uploading} /></label>{draft.photoUrl && <button type="button" className="profile-photo-remove" onClick={removePhoto}>Remove</button>}</div></div>
               <div className="profile-edit-actions"><button type="button" onClick={() => setEditing(false)}>Cancel</button><button type="submit" disabled={saving || uploading}>{saving ? 'Saving…' : 'Save changes'}</button></div>
             </form>}
             <div className="profile-stats">

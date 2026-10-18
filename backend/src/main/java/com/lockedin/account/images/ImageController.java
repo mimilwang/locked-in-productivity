@@ -21,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Upload first, then put the returned url in your profile (PATCH /users/me) or league (POST /leagues).
+ * Bytes live in the database (not a local folder) so the same photo loads on every device.
  * The url is relative, so the frontend shows it as backendBaseUrl + url.
  */
 @RestController

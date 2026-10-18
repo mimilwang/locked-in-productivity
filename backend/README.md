@@ -98,7 +98,7 @@ The numbers live in `application.yml` under `scoring:`, and the logic in `scorin
 | `account/` | Users table, profiles, profile stats (streaks, badges, titles) |
 | `account/auth/` | Sign up, log in, JWT, Spring Security config |
 | `account/friends/` | Friend requests and friends list |
-| `account/images/` | Profile + league photo uploads (saved to `uploads/`) |
+| `account/images/` | Profile + league photo uploads (saved in `stored_images` DB table) |
 | `league/` | Leagues, memberships, invite codes, join rules |
 | `progress/` | Timer + manual progress logs |
 | `scoring/` | Weekly-goal points, streaks, leaderboards, monthly MVP/Chud |
