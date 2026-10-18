@@ -153,6 +153,26 @@ class ScoringEngineTest {
     }
 
     @Test
+    void challengeBonusGoesOnTopOfTheCap() {
+        // full goal (100) + a 15-point challenge = 115
+        List<Award> awards = time(List.of(1L), new LogEntry(1L, MON, 300), new LogEntry(1L, TUE, 0, 15));
+        assertEquals(115, total(awards, 1L));
+    }
+
+    @Test
+    void challengesAddNoMinutesInTimeLeagues() {
+        List<Award> awards = time(List.of(1L), new LogEntry(1L, MON, 0, 20));
+        assertEquals(20, total(awards, 1L)); // just the bonus, no goal progress
+    }
+
+    @Test
+    void challengesCountAsATaskInTaskLeagues() {
+        // 4-task goal: the challenge is 1 task (25) + its 15 bonus = 40
+        List<Award> awards = tasks(List.of(1L), new LogEntry(1L, MON, 0, 15));
+        assertEquals(40, total(awards, 1L));
+    }
+
+    @Test
     void weeklyPointsHelper() {
         assertEquals(0, ScoringEngine.weeklyPoints(0, 300, RULES));
         assertEquals(33, ScoringEngine.weeklyPoints(100, 300, RULES));
