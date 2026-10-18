@@ -120,6 +120,7 @@ class ApiFlowIntegrationTest {
         mvc.perform(get("/leagues/" + leagueId + "/overview").header("Authorization", bearer(owner)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.membersHitWeeklyGoal").value(0))
+                .andExpect(jsonPath("$.groupGoalProgress").value(0.25))
                 .andExpect(jsonPath("$.weeklyLeaderboard[0].points").value(50))
                 .andExpect(jsonPath("$.memberCount").value(2));
     }

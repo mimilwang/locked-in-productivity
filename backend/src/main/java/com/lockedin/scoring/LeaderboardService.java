@@ -88,7 +88,13 @@ public class LeaderboardService {
         int hit = (int) members.stream()
                 .filter(m -> progress.getOrDefault(m.getUserId(), 0) >= league.getWeeklyTarget())
                 .count();
-        double groupProgress = members.isEmpty() ? 0.0 : (double) hit / members.size();
+        // Combined progress toward the league's weekly goal. Cap each member at the
+        // target so extra work by one person cannot hide another person's missing work.
+        long completedProgress = members.stream()
+                .mapToLong(m -> Math.min(progress.getOrDefault(m.getUserId(), 0), league.getWeeklyTarget()))
+                .sum();
+        long groupTarget = (long) members.size() * league.getWeeklyTarget();
+        double groupProgress = groupTarget <= 0 ? 0.0 : (double) completedProgress / groupTarget;
         long daysLeft = Math.max(0, ChronoUnit.DAYS.between(today, league.getEndDate()) + 1);
 
         return new LeagueOverview(league.getId(), league.getName(), league.getGoalDescription(), league.getGoalType(),
