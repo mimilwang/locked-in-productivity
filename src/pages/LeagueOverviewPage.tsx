@@ -191,7 +191,7 @@ export default function LeagueOverviewPage({ league, leagues, onSelectLeague }: 
                   <div className={leader.rank === 1 ? 'leader-row first' : 'leader-row'} key={leader.name}>
                     <span className="rank">{leader.rank.toString().padStart(2, '0')}</span>
                     <span className="avatar" style={{ background: leader.color }}>{leader.avatarUrl ? <img src={resolveImageUrl(leader.avatarUrl)} alt="" /> : leader.initials}</span>
-                    <span className="leader-name"><strong>{leader.name}</strong>{leader.checkedIn && <small>Checked in today</small>}</span>
+                    <span className="leader-name"><strong>{leader.name}</strong><small>{leader.checkedIn ? 'Logged today' : 'Nothing logged today'}</small></span>
                     <strong className="points">{leader.points} <small>PTS</small></strong>
                   </div>
                 ))}
