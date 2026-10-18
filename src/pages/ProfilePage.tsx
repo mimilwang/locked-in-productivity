@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { cachedUser, getMyProfile, logout } from '../services/authService'
 import type { UserProfile } from '../types/api'
+import AppSidebar from '../components/AppSidebar'
 
 function initials(name: string) {
   return name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase()
@@ -14,7 +15,34 @@ export default function ProfilePage() {
     getMyProfile().then(setProfile).catch((caught) => setError(caught instanceof Error ? caught.message : 'Could not load profile.'))
   }, [])
 
-  return <main className="profile-page"><style>{profileStyles}</style><header><a href="/overview"><b>ϟ</b> LOCKED IN</a><a href="/overview">← Back to overview</a></header><section className="profile-shell">{error && <div className="profile-error">{error}</div>}{!profile ? <p>Loading profile…</p> : <><div className="profile-hero"><div className="profile-avatar">{profile.photoUrl ? <img src={profile.photoUrl} alt="" /> : initials(profile.name)}</div><div><p>PLAYER PROFILE</p><h1>{profile.displayName}</h1><span>{profile.name} · {profile.email}</span></div></div><div className="profile-stats"><article><span>CURRENT STREAK</span><strong>{profile.currentStreak}</strong><small>days</small></article><article><span>PERSONAL BEST</span><strong>{profile.bestStreak}</strong><small>days</small></article><article><span>BADGES</span><strong>{profile.badges.length}</strong><small>earned</small></article><article><span>TITLES</span><strong>{profile.titles.length}</strong><small>all time</small></article></div><div className="profile-grid"><section><p>ACCOUNT DETAILS</p><dl><div><dt>Name</dt><dd>{profile.name}</dd></div><div><dt>Display name</dt><dd>{profile.displayName}</dd></div><div><dt>Email</dt><dd>{profile.email}</dd></div><div><dt>Time zone</dt><dd>{profile.timeZone.replaceAll('_', ' ')}</dd></div></dl></section><section><p>LEAGUE HISTORY</p>{profile.titles.length ? profile.titles.map((title) => <div className="profile-title" key={`${title.leagueId}-${title.month}`}><strong>{title.title === 'MVP' ? '🏆 MVP' : 'CHUD'}</strong><span>{title.leagueName} · {title.month}</span></div>) : <div className="profile-empty">No titles yet. This month is still yours.</div>}</section></div><button className="logout" onClick={logout}>Log out</button></>}</section></main>
+  return (
+    <div className="app-page-with-sidebar">
+      <AppSidebar active="profile" />
+      <main className="profile-page">
+        <style>{profileStyles}</style>
+        <section className="profile-shell">
+          {error && <div className="profile-error">{error}</div>}
+          {!profile ? <p>Loading profile…</p> : <>
+            <div className="profile-hero">
+              <div className="profile-avatar">{profile.photoUrl ? <img src={profile.photoUrl} alt="" /> : initials(profile.name)}</div>
+              <div><p>PLAYER PROFILE</p><h1>{profile.displayName}</h1><span>{profile.name} · {profile.email}</span></div>
+            </div>
+            <div className="profile-stats">
+              <article><span>CURRENT STREAK</span><strong>{profile.currentStreak}</strong><small>days</small></article>
+              <article><span>PERSONAL BEST</span><strong>{profile.bestStreak}</strong><small>days</small></article>
+              <article><span>BADGES</span><strong>{profile.badges.length}</strong><small>earned</small></article>
+              <article><span>TITLES</span><strong>{profile.titles.length}</strong><small>all time</small></article>
+            </div>
+            <div className="profile-grid">
+              <section><p>ACCOUNT DETAILS</p><dl><div><dt>Name</dt><dd>{profile.name}</dd></div><div><dt>Display name</dt><dd>{profile.displayName}</dd></div><div><dt>Email</dt><dd>{profile.email}</dd></div><div><dt>Time zone</dt><dd>{profile.timeZone.replaceAll('_', ' ')}</dd></div></dl></section>
+              <section><p>LEAGUE HISTORY</p>{profile.titles.length ? profile.titles.map((title) => <div className="profile-title" key={`${title.leagueId}-${title.month}`}><strong>{title.title === 'MVP' ? '🏆 MVP' : 'CHUD'}</strong><span>{title.leagueName} · {title.month}</span></div>) : <div className="profile-empty">No titles yet. This month is still yours.</div>}</section>
+            </div>
+            <button className="logout" onClick={logout}>Log out</button>
+          </>}
+        </section>
+      </main>
+    </div>
+  )
 }
 
 const profileStyles = `

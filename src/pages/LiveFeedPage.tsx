@@ -9,24 +9,7 @@ import {
 } from '../lib/liveFeed'
 import type { FeedActivity, ReactionEmoji } from '../types/feed'
 import './LiveFeedPage.css'
-
-const NAV_ITEMS = [
-  'Overview',
-  'Daily check-in',
-  'Live feed',
-  'Leaderboard',
-  'Monthly awards',
-  'Dare wheel',
-]
-
-const NAV_ROUTES: Record<string, string> = {
-  Overview: '/overview',
-  'Daily check-in': '/timer',
-  'Live feed': '/feed',
-  Leaderboard: '/leaderboard',
-  'Monthly awards': '/monthly-awards',
-  'Dare wheel': '/daily-challenges',
-}
+import AppSidebar from '../components/AppSidebar'
 
 const REACTION_OPTIONS: ReactionEmoji[] = ['🔥', '👏', '💀', '🔒']
 
@@ -140,12 +123,6 @@ export default function LiveFeedPage() {
   const [photoName, setPhotoName] = useState('')
   const [livePulse, setLivePulse] = useState(0)
 
-  const dateLabel = new Date().toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  })
-
   // Soft "live" refresh while the tab is open
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -195,42 +172,13 @@ export default function LiveFeedPage() {
 
   return (
     <div className="lf-page">
-      <aside className="lf-sidebar">
-        <div className="lf-logo">
-          <span aria-hidden>⚡</span> LOCKED IN
-        </div>
-
-        <p className="lf-eyebrow lf-eyebrow--dark">Your clubhouse</p>
-        <a className="lf-nav-link" href="/overview">
-          Your league
-        </a>
-
-        <p className="lf-eyebrow lf-eyebrow--dark">{FEED_LEAGUE.name}</p>
-        <nav aria-label="League">
-          {NAV_ITEMS.map((item) => (
-            <a
-              key={item}
-              href={NAV_ROUTES[item]}
-              className={`lf-nav-link ${item === 'Live feed' ? 'lf-nav-link--active' : ''}`}
-              aria-current={item === 'Live feed' ? 'page' : undefined}
-            >
-              {item}
-            </a>
-          ))}
-        </nav>
-
-        <div className="lf-sidebar-note">
-          <p className="lf-eyebrow lf-eyebrow--lime">Hype each other up</p>
-          <p>React to wins. Drop proof. Keep the league loud.</p>
-        </div>
-      </aside>
+      <AppSidebar active="feed" />
 
       <div className="lf-main">
         <header className="lf-topbar">
           <span>
             Your leagues / {FEED_LEAGUE.name} / Live feed
           </span>
-          <span>{dateLabel}</span>
         </header>
 
         <main className="lf-content">

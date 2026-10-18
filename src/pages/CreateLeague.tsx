@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent, KeyboardEvent } from 'react'
 import './CreateLeague.css'
 import { apiRequest } from '../services/apiClient'
+import AppSidebar from '../components/AppSidebar'
 
 // Preset choices for the stakes. "custom" lets the creator type their own.
 const REWARDS = [
@@ -14,15 +15,6 @@ const PUNISHMENTS = [
   { id: 'wheel', title: 'Spin the dare wheel', detail: 'Low-stakes dares, chosen by the group.' },
   { id: 'snack', title: 'Bring the next group snack', detail: 'Keep it simple and affordable.' },
 ]
-
-const NAV_ITEMS = ['Overview', 'Daily check-in', 'Leaderboard', 'Monthly awards', 'Dare wheel']
-const NAV_ROUTES: Record<string, string> = {
-  Overview: '/overview',
-  'Daily check-in': '/timer',
-  Leaderboard: '/leaderboard',
-  'Monthly awards': '/monthly-awards',
-  'Dare wheel': '/daily-challenges',
-}
 
 function initials(text: string) {
   return text
@@ -100,30 +92,7 @@ export default function CreateLeague() {
   return (
     <div className="cl-page">
       {/* ---------- Sidebar ---------- */}
-      <aside className="cl-sidebar">
-        <div className="cl-logo">
-          <span aria-hidden>⚡</span> LOCKED IN
-        </div>
-
-        <p className="cl-eyebrow cl-eyebrow--dark">Your clubhouse</p>
-        <a className="cl-nav-link cl-nav-link--active" href="/overview" aria-current="page">
-          Your league
-        </a>
-
-        <p className="cl-eyebrow cl-eyebrow--dark">{name || 'New league'}</p>
-        <nav aria-label="League">
-          {NAV_ITEMS.map((item) => (
-            <a key={item} className="cl-nav-link" href={NAV_ROUTES[item]}>
-              {item}
-            </a>
-          ))}
-        </nav>
-
-        <div className="cl-sidebar-note">
-          <p className="cl-eyebrow cl-eyebrow--lime">Better together</p>
-          <p>A little competition. A lot of showing up.</p>
-        </div>
-      </aside>
+      <AppSidebar active="leagues" />
 
       {/* ---------- Main ---------- */}
       <div className="cl-main">

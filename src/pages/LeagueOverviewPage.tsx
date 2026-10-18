@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { getFocusSessions } from '../lib/sessionLog'
+import AppSidebar from '../components/AppSidebar'
 
 type Leader = {
   rank: number
@@ -38,37 +39,11 @@ export default function LeagueOverviewPage() {
     <div className="overview-page">
       <style>{pageStyles}</style>
 
-      <aside className="sidebar">
-        <a className="brand" href="/" aria-label="Locked In home">
-          <span className="brand-bolt">ϟ</span>
-          <span>LOCKED IN</span>
-        </a>
-
-        <nav className="nav" aria-label="Main navigation">
-          <p className="nav-label">YOUR LEAGUE</p>
-          <a className="nav-link active" href="/overview"><span>▦</span> Overview</a>
-          <a className="nav-link" href="/timer"><span>✓</span> Daily check-in</a>
-          <a className="nav-link" href="/feed"><span>◉</span> Live feed</a>
-          <a className="nav-link" href="/leaderboard"><span>▥</span> Leaderboard</a>
-          <a className="nav-link" href="/monthly-awards"><span>♕</span> Monthly awards</a>
-          <a className="nav-link" href="/daily-challenges"><span>◎</span> Daily challenges</a>
-        </nav>
-
-        <div className="sidebar-note">
-          <strong>BETTER TOGETHER.</strong>
-          <p>A little competition. A lot of showing up.</p>
-        </div>
-
-        <a className="sidebar-profile" href="/profile" aria-label="Open profile">
-          <span className="avatar avatar-green">AC</span>
-          <span><strong>Alex Chen</strong><small>University of Washington</small></span>
-        </a>
-      </aside>
+      <AppSidebar active="dashboard" />
 
       <main className="main-shell" id="overview">
         <header className="topbar">
           <span>Clubhouse / The 8 AM Club</span>
-          <div className="topbar-actions"><span>OCT 17, 2026</span><button aria-label="Notifications">♢</button><a className="profile-link" href="/profile" aria-label="Open profile"><span className="avatar avatar-small avatar-green">AC</span></a></div>
         </header>
 
         <div className="content">
@@ -201,9 +176,6 @@ const pageStyles = `
   .avatar-small { width: 30px; height: 30px; font-size: 9px; }
   .main-shell { min-width: 0; }
   .topbar { height: 68px; padding: 0 35px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #dddcd2; color: #6f7770; font-size: 11px; }
-  .topbar-actions { display: flex; align-items: center; gap: 20px; font-size: 9px; letter-spacing: .04em; }
-  .topbar-actions button { border: 0; background: none; font-size: 20px; color: #17231b; cursor: pointer; }
-  .profile-link { display: inline-flex; text-decoration: none; }
   .content { padding: 38px 40px 20px; max-width: 1350px; margin: 0 auto; }
   .welcome { display: flex; align-items: flex-end; justify-content: space-between; gap: 30px; margin-bottom: 30px; }
   .welcome h1 { margin: 0 0 7px; color: #17231b; font: 800 clamp(35px, 4vw, 56px)/1 Impact, 'Arial Narrow', sans-serif; letter-spacing: .015em; }
@@ -287,7 +259,6 @@ const pageStyles = `
     .nav, .sidebar-profile, .sidebar-note { display: none; }
     .topbar { height: 52px; padding: 0 18px; }
     .topbar > span { display: none; }
-    .topbar-actions { margin-left: auto; }
     .content { padding: 28px 18px 18px; }
     .welcome { align-items: stretch; flex-direction: column; }
     .league-hero { grid-template-columns: 1fr; }
