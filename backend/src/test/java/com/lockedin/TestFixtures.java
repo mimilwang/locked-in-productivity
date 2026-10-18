@@ -14,7 +14,7 @@ public final class TestFixtures {
     /** Signs up a user in Los Angeles time and returns their id. */
     public static Long newUser(AuthService auth, String name) {
         return auth.signUp(new SignUpRequest(name, name, name.toLowerCase() + "@test.com", "password123",
-                "America/Los_Angeles", null)).user().id();
+                "America/Los_Angeles", null, null)).user().id();
     }
 
     /** A 4-week TIME league starting today. */

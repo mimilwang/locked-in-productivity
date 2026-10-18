@@ -43,7 +43,6 @@ public class LeagueService {
 
     @Transactional
     public LeagueResponse create(Long me, CreateLeagueRequest request) {
-        requireNoExistingLeague(me);
         User creator = userService.get(me);
         LocalDate today = TimeUtils.today(clock, TimeUtils.zone(creator.getTimeZone()));
         LocalDate start = request.startDate() != null ? request.startDate() : today;
@@ -75,7 +74,6 @@ public class LeagueService {
 
     @Transactional
     public LeagueResponse join(Long me, JoinLeagueRequest request) {
-        requireNoExistingLeague(me);
         User user = userService.get(me);
         League league = leagues.findByInviteCode(request.inviteCode().trim().toUpperCase())
                 .orElseThrow(() -> ApiException.notFound("No league with that invite code"));
@@ -176,9 +174,4 @@ public class LeagueService {
         throw new IllegalStateException("Could not generate a unique invite code");
     }
 
-    private void requireNoExistingLeague(Long userId) {
-        if (members.existsByUserId(userId)) {
-            throw ApiException.conflict("You can only belong to one league at a time");
-        }
-    }
 }

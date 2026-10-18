@@ -77,9 +77,10 @@ class ProgressServiceTest {
 
     @Test
     void taskGoalsCountEachLogAsOneTask() {
-        Long taskLeague = leagues.create(me, TestFixtures.league(GoalType.TASKS, 4)).id();
-        progress.logManually(me, new ManualLogRequest(taskLeague, null, null, "gym"));
-        assertEquals(25, leaderboards.leaderboard(me, taskLeague, LeaderboardPeriod.WEEKLY).get(0).points());
+        Long taskUser = TestFixtures.newUser(auth, "TaskUser");
+        Long taskLeague = leagues.create(taskUser, TestFixtures.league(GoalType.TASKS, 4)).id();
+        progress.logManually(taskUser, new ManualLogRequest(taskLeague, null, null, "gym"));
+        assertEquals(25, leaderboards.leaderboard(taskUser, taskLeague, LeaderboardPeriod.WEEKLY).get(0).points());
     }
 
     @Test

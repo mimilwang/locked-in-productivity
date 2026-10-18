@@ -30,7 +30,7 @@ class AuthServiceTest {
     JwtService jwt;
 
     private SignUpRequest signUp(String email, String timeZone) {
-        return new SignUpRequest("Renee", "renee", email, "password123", timeZone, null);
+        return new SignUpRequest("Renee", "renee", email, "password123", timeZone, null, "University of Washington");
     }
 
     @Test

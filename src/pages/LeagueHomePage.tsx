@@ -1,35 +1,49 @@
 import { useEffect, useState } from 'react'
 import LeagueOverviewPage from './LeagueOverviewPage'
-import { getMyLeague, joinLeague } from '../services/leagueService'
+import { getActiveLeagueId, getMyLeagues, joinLeague, setActiveLeague } from '../services/leagueService'
 import type { League } from '../services/leagueService'
 import AppSidebar from '../components/AppSidebar'
 
 export default function LeagueHomePage() {
-  const [league, setLeague] = useState<League | null | undefined>(undefined)
+  const [leagues, setLeagues] = useState<League[] | undefined>(undefined)
+  const [activeLeagueId, setActiveLeagueId] = useState<number | null>(() => getActiveLeagueId())
   const [inviteCode, setInviteCode] = useState('')
   const [joining, setJoining] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    getMyLeague().then(setLeague).catch((caught) => setError(caught instanceof Error ? caught.message : 'Could not load your league.'))
+    getMyLeagues().then((loaded) => {
+      setLeagues(loaded)
+      setActiveLeagueId((current) => loaded.some((league) => league.id === current) ? current : loaded[0]?.id ?? null)
+    }).catch((caught) => setError(caught instanceof Error ? caught.message : 'Could not load your leagues.'))
   }, [])
 
-  async function join() {
-    if (!inviteCode.trim()) return
+  async function join(code = inviteCode, bubbleError = false) {
+    if (!code.trim()) return
     setJoining(true)
     setError('')
     try {
-      setLeague(await joinLeague(inviteCode.trim()))
+      const joined = await joinLeague(code.trim())
+      setLeagues((current) => [...(current ?? []).filter((league) => league.id !== joined.id), joined])
+      setActiveLeagueId(joined.id)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not join that league.')
+      if (bubbleError) throw caught
     } finally {
       setJoining(false)
     }
   }
 
-  if (league) return <LeagueOverviewPage />
+  const activeLeague = leagues?.find((league) => league.id === activeLeagueId) ?? leagues?.[0]
 
-  return <div className="app-page-with-sidebar"><AppSidebar active="leagues" /><main className="league-gate"><style>{gateStyles}</style><section>{league === undefined && !error ? <p>Loading your clubhouse…</p> : <><p className="gate-kicker">YOUR CLUBHOUSE</p><h1>Find your people.<br />Start showing up.</h1><p className="gate-intro">You can belong to one private league. Create one for your crew or enter the invite code a friend sent you.</p>{error && <div className="gate-error">{error}</div>}<div className="gate-options"><article><span>01</span><h2>Start a league</h2><p>Choose the shared goal, reward, and last-place consequence.</p><a href="/create-league">Create your league →</a></article><article><span>02</span><h2>Join your crew</h2><p>League invite codes are private and can only be used by signed-in players.</p><label>INVITE CODE<input value={inviteCode} onChange={(event) => setInviteCode(event.target.value.toUpperCase())} placeholder="LOCKED24" /></label><button onClick={join} disabled={joining || !inviteCode.trim()}>{joining ? 'Joining…' : 'Join league →'}</button></article></div></>}</section></main></div>
+  function selectLeague(league: League) {
+    setActiveLeague(league)
+    setActiveLeagueId(league.id)
+  }
+
+  if (activeLeague) return <LeagueOverviewPage league={activeLeague} leagues={leagues ?? []} onSelectLeague={selectLeague} onJoinLeague={(code) => join(code, true)} />
+
+  return <div className="app-page-with-sidebar"><AppSidebar active="leagues" /><main className="league-gate"><style>{gateStyles}</style><section>{leagues === undefined && !error ? <p>Loading your clubhouse…</p> : <><p className="gate-kicker">YOUR CLUBHOUSE</p><h1>Find your people.<br />Start showing up.</h1><p className="gate-intro">Create leagues for different goals or join your friends with a private invite code.</p>{error && <div className="gate-error">{error}</div>}<div className="gate-options"><article><span>01</span><h2>Start a league</h2><p>Choose the shared goal, reward, and last-place consequence.</p><a href="/create-league">Create your league →</a></article><article><span>02</span><h2>Join your crew</h2><p>League invite codes are private and can only be used by signed-in players.</p><label>INVITE CODE<input value={inviteCode} onChange={(event) => setInviteCode(event.target.value.toUpperCase())} placeholder="LOCKED24" /></label><button onClick={() => void join()} disabled={joining || !inviteCode.trim()}>{joining ? 'Joining…' : 'Join league →'}</button></article></div></>}</section></main></div>
 }
 
 const gateStyles = `
