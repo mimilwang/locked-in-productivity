@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
-import {
-  addFeedPost,
-  formatRelativeTime,
-  getFeedActivities,
-  toggleReaction,
-} from '../lib/liveFeed'
+import { formatRelativeTime } from '../lib/liveFeed'
 import type { FeedActivity, ReactionEmoji } from '../types/feed'
 import './LiveFeedPage.css'
 import AppSidebar from '../components/AppSidebar'
 import { cachedUser } from '../services/authService'
 import { getCachedLeague, getLeagueLogs, getLeagueMembers } from '../services/leagueService'
 import type { League, LeagueMember, ProgressLog } from '../services/leagueService'
+import { apiRequest } from '../services/apiClient'
+import { createFeedPost, createFeedReply, getFeed, toggleFeedReaction } from '../services/feedService'
+import type { FeedStateDto } from '../services/feedService'
+
+const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? 'http://localhost:8080'
+const imageSrc = (url: string) => (url.startsWith('http') ? url : `${API_URL}${url}`)
 
 const REACTION_OPTIONS: ReactionEmoji[] = ['🔥', '👏', '💀', '🔒']
 
@@ -46,12 +47,16 @@ function ActivityCard({
   currentUserId,
   currentUserName,
   onReact,
+  onReply,
 }: {
   activity: FeedActivity
   currentUserId: string
   currentUserName: string
-  onReact: (activityId: string, emoji: ReactionEmoji) => void
+  onReact: (activityId: string, emoji: ReactionEmoji) => Promise<void>
+  onReply: (activityId: string, body: string) => Promise<void>
 }) {
+  const [reply, setReply] = useState('')
+  const [replying, setReplying] = useState(false)
   const myReaction = activity.reactions.find((r) =>
     r.userIds.includes(currentUserId),
   )?.emoji
@@ -89,7 +94,7 @@ function ActivityCard({
 
       {activity.imageUrl ? (
         <div className="lf-card__photo">
-          <img src={activity.imageUrl} alt="" />
+          <img src={imageSrc(activity.imageUrl)} alt="" />
         </div>
       ) : null}
 
@@ -104,13 +109,36 @@ function ActivityCard({
               type="button"
               className={`lf-reaction ${active ? 'lf-reaction--active' : ''}`}
               aria-pressed={active}
-              onClick={() => onReact(activity.id, emoji)}
+              onClick={() => void onReact(activity.id, emoji)}
             >
               <span aria-hidden>{emoji}</span>
               {count > 0 ? <span>{count}</span> : null}
             </button>
           )
         })}
+      </div>
+
+      <div className="lf-replies">
+        {(activity.replies ?? []).map((item) => (
+          <div className="lf-reply" key={item.id}>
+            <span className="lf-reply__avatar" aria-hidden>{initials(item.actor.name)}</span>
+            <p><strong>{item.actor.id === currentUserId ? currentUserName : item.actor.name}</strong> {item.body}<small>{formatRelativeTime(item.createdAt)}</small></p>
+          </div>
+        ))}
+        <form className="lf-reply-form" onSubmit={async (event) => {
+          event.preventDefault()
+          if (!reply.trim() || replying) return
+          setReplying(true)
+          try {
+            await onReply(activity.id, reply.trim())
+            setReply('')
+          } finally {
+            setReplying(false)
+          }
+        }}>
+          <input value={reply} onChange={(event) => setReply(event.target.value)} maxLength={280} placeholder="Write a reply…" aria-label="Write a reply" />
+          <button type="submit" disabled={!reply.trim() || replying}>{replying ? 'Sending…' : 'Reply'}</button>
+        </form>
       </div>
     </article>
   )
@@ -142,6 +170,7 @@ function logsToActivities(logs: ProgressLog[], members: LeagueMember[], league: 
           points: pts > 0 ? pts : undefined,
           createdAt: log.endedAt ?? log.startedAt,
           reactions: [],
+          replies: [],
         }
       }
 
@@ -157,8 +186,40 @@ function logsToActivities(logs: ProgressLog[], members: LeagueMember[], league: 
         detail: log.note ?? undefined,
         createdAt: log.endedAt ?? log.startedAt,
         reactions: [],
+        replies: [],
       }
     })
+}
+
+function combineFeed(base: FeedActivity[], state: FeedStateDto, leagueId: number): FeedActivity[] {
+  const posts: FeedActivity[] = state.posts.map((post) => ({
+    id: post.id,
+    leagueId: String(leagueId),
+    type: 'update',
+    actor: { id: String(post.userId), name: post.displayName },
+    headline: 'dropped a league update',
+    detail: post.body,
+    imageUrl: post.imageUrl ?? undefined,
+    createdAt: post.createdAt,
+    reactions: [],
+    replies: [],
+  }))
+  return [...base, ...posts].map((activity) => {
+    const grouped = new Map<ReactionEmoji, string[]>()
+    state.reactions.filter((item) => item.activityId === activity.id).forEach((item) => {
+      grouped.set(item.emoji, [...(grouped.get(item.emoji) ?? []), String(item.userId)])
+    })
+    return {
+      ...activity,
+      reactions: [...grouped].map(([emoji, userIds]) => ({ emoji, userIds })),
+      replies: state.replies.filter((item) => item.activityId === activity.id).map((item) => ({
+        id: String(item.id),
+        actor: { id: String(item.userId), name: item.displayName },
+        body: item.body,
+        createdAt: item.createdAt,
+      })),
+    }
+  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 }
 
 export default function LiveFeedPage() {
@@ -167,23 +228,21 @@ export default function LiveFeedPage() {
     return user ? { id: String(user.id), name: user.displayName || user.name } : { id: 'me', name: 'You' }
   }, [])
   const league = useMemo(() => getCachedLeague(), [])
-  const feedId = league ? String(league.id) : 'no-league'
-
-  const [logActivities, setLogActivities] = useState<FeedActivity[]>([])
-  const [activities, setActivities] = useState<FeedActivity[]>(() => getFeedActivities(feedId))
+  const [activities, setActivities] = useState<FeedActivity[]>([])
+  const [error, setError] = useState('')
 
   // Pull the league's real activity from the backend.
   const refresh = useCallback(async () => {
     if (!league) return
     try {
-      const [logs, members] = await Promise.all([getLeagueLogs(league.id), getLeagueMembers(league.id)])
+      const [logs, members, feed] = await Promise.all([getLeagueLogs(league.id), getLeagueMembers(league.id), getFeed(league.id)])
       const fromLogs = logsToActivities(logs, members, league)
-      setLogActivities(fromLogs)
-      setActivities(getFeedActivities(feedId, fromLogs))
-    } catch {
-      // backend unreachable: keep whatever is showing
+      setActivities(combineFeed(fromLogs, feed, league.id))
+      setError('')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not refresh the live feed.')
     }
-  }, [league, feedId])
+  }, [league])
 
   useEffect(() => {
     void refresh()
@@ -191,6 +250,8 @@ export default function LiveFeedPage() {
   const [draft, setDraft] = useState('')
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
   const [photoName, setPhotoName] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [posting, setPosting] = useState(false)
   const [livePulse, setLivePulse] = useState(0)
 
   // Soft "live" refresh while the tab is open
@@ -198,49 +259,71 @@ export default function LiveFeedPage() {
     const id = window.setInterval(() => {
       void refresh()
       setLivePulse((n) => n + 1)
-    }, 30_000)
+    }, 5_000)
     return () => window.clearInterval(id)
   }, [refresh])
 
-  function handleReact(activityId: string, emoji: ReactionEmoji) {
-    setActivities(
-      toggleReaction(activityId, me.id, emoji, feedId, logActivities),
-    )
+  async function handleReact(activityId: string, emoji: ReactionEmoji) {
+    if (!league) return
+    try {
+      await toggleFeedReaction(league.id, activityId, emoji)
+      await refresh()
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not save reaction.')
+    }
   }
 
-  function handlePhoto(event: ChangeEvent<HTMLInputElement>) {
+  async function handlePhoto(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     if (!file) return
-    if (photoUrl) URL.revokeObjectURL(photoUrl)
-    setPhotoUrl(URL.createObjectURL(file))
-    setPhotoName(file.name)
+    event.target.value = ''
+    setUploading(true)
+    setError('')
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      const uploaded = await apiRequest<{ url: string }>('/images', { method: 'POST', body: form })
+      setPhotoUrl(uploaded.url)
+      setPhotoName(file.name)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not upload that photo.')
+    } finally {
+      setUploading(false)
+    }
   }
 
   function clearPhoto() {
-    if (photoUrl) URL.revokeObjectURL(photoUrl)
     setPhotoUrl(null)
     setPhotoName('')
   }
 
-  function handleCompose(event: FormEvent) {
+  async function handleCompose(event: FormEvent) {
     event.preventDefault()
-    if (!draft.trim()) return
-    setActivities(
-      addFeedPost(
-        {
-          leagueId: feedId,
-          actorId: me.id,
-          actorName: me.name,
-          detail: draft,
-          imageUrl: photoUrl ?? undefined,
-        },
-        logActivities,
-      ),
-    )
-    setDraft('')
-    // Keep object URL alive inside the saved post; clear composer refs only
-    setPhotoUrl(null)
-    setPhotoName('')
+    if (!draft.trim() || !league) return
+    setPosting(true)
+    setError('')
+    try {
+      await createFeedPost(league.id, draft.trim(), photoUrl ?? undefined)
+      setDraft('')
+      setPhotoUrl(null)
+      setPhotoName('')
+      await refresh()
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not post to the feed.')
+    } finally {
+      setPosting(false)
+    }
+  }
+
+  async function handleReply(activityId: string, body: string) {
+    if (!league) return
+    try {
+      await createFeedReply(league.id, activityId, body)
+      await refresh()
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not post reply.')
+      throw caught
+    }
   }
 
   return (
@@ -269,6 +352,8 @@ export default function LiveFeedPage() {
             </span>
           </div>
 
+          {error && <div className="lf-error" role="alert">{error}</div>}
+
           <form className="lf-composer" onSubmit={handleCompose}>
             <div className="lf-composer__row">
               <div className="lf-avatar lf-avatar--me" aria-hidden>
@@ -288,7 +373,7 @@ export default function LiveFeedPage() {
                 />
                 {photoUrl ? (
                   <div className="lf-composer__preview">
-                    <img src={photoUrl} alt="" />
+                    <img src={imageSrc(photoUrl)} alt="" />
                     <button type="button" onClick={clearPhoto}>
                       Remove photo
                     </button>
@@ -309,9 +394,9 @@ export default function LiveFeedPage() {
                   <button
                     type="submit"
                     className="lf-submit"
-                    disabled={!draft.trim()}
+                    disabled={!draft.trim() || posting || uploading}
                   >
-                    Post to feed <span aria-hidden>→</span>
+                    {posting ? 'Posting…' : uploading ? 'Uploading…' : 'Post to feed'} <span aria-hidden>→</span>
                   </button>
                 </div>
               </div>
@@ -331,13 +416,14 @@ export default function LiveFeedPage() {
                 currentUserId={me.id}
                 currentUserName={me.name}
                 onReact={handleReact}
+                onReply={handleReply}
               />
             ))}
           </section>
         </main>
 
         <footer className="lf-footer">
-          <span>League-private · Reactions sync on this device for the MVP</span>
+          <span>League-private · Posts, reactions, and replies sync across devices</span>
           <span>{activities.length} updates</span>
         </footer>
       </div>

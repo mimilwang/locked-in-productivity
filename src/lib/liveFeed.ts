@@ -47,6 +47,7 @@ export function getFeedActivities(leagueId: string, base: FeedActivity[] = []): 
     byId.set(item.id, {
       ...item,
       reactions: store.reactions[item.id] ?? item.reactions,
+      replies: item.replies ?? [],
     })
   }
 
@@ -55,6 +56,7 @@ export function getFeedActivities(leagueId: string, base: FeedActivity[] = []): 
     byId.set(extra.id, {
       ...extra,
       reactions: store.reactions[extra.id] ?? extra.reactions,
+      replies: extra.replies ?? [],
     })
   }
 
@@ -119,6 +121,7 @@ export function addFeedPost(input: {
     imageUrl: input.imageUrl,
     createdAt: new Date().toISOString(),
     reactions: [],
+    replies: [],
   }
   store.extras = [post, ...store.extras]
   saveFeedStore(store)
