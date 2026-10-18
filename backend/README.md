@@ -98,7 +98,7 @@ The numbers live in `application.yml` under `scoring:`, and the logic in `scorin
 | `account/` | Users table, profiles, profile stats (streaks, badges, titles) |
 | `account/auth/` | Sign up, log in, JWT, Spring Security config |
 | `account/friends/` | Friend requests and friends list |
-| `account/images/` | Profile + league photo uploads (saved to `uploads/`) |
+| `account/images/` | Profile + league photo uploads (saved in `stored_images` DB table) |
 | `league/` | Leagues, memberships, invite codes, join rules |
 | `progress/` | Timer + manual progress logs |
 | `scoring/` | Weekly-goal points, streaks, leaderboards, monthly MVP/Chud |
@@ -112,12 +112,13 @@ Each feature follows Controller (URLs) → Service (rules) → Repository (datab
   because leagues have at most 15 people.
 
 ## Deploying
-Set these environment variables:
+For **Render (API) + Vercel (frontend)** see [`../DEPLOY.md`](../DEPLOY.md). Minimum env vars on Render:
 ```
 SPRING_DATASOURCE_URL=jdbc:postgresql://<host>:5432/<db>
 SPRING_DATASOURCE_USERNAME=...
 SPRING_DATASOURCE_PASSWORD=...
 JWT_SECRET=<at least 32 random characters>
 AUTH_DEV_HEADER_ENABLED=false
-APP_CORS_ALLOWED_ORIGINS=https://<your-frontend-url>
+APP_CORS_ALLOWED_ORIGINS=https://<your-vercel-url>
 ```
+On Vercel set `VITE_API_URL=https://<your-render-service>.onrender.com` (build-time). Use Postgres on Render — H2 in-memory and local `uploads/` do not survive Render restarts.
