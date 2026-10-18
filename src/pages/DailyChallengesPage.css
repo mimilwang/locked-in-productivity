@@ -1,10 +1,10 @@
 /* Locked In — Daily Challenges (matches Create Profile / app aesthetic) */
 
 .daily-challenges {
-  --ink: #0f1c33;
-  --forest: #0f1f3d;
-  --lime: #f4d35e;
-  --cream: #faf6ec;
+  --ink: #244452;
+  --forest: #244452;
+  --lime: #ffd66b;
+  --cream: #fff9ef;
   --card: #fff;
   --muted: #687069;
   --muted-soft: #7b837c;
@@ -14,7 +14,7 @@
   --success-bg: #e7f2d0;
   --success-border: #c4dc96;
   --success-text: #294018;
-  --outline: #284a85;
+  --outline: #328eab;
 
   min-height: 100svh;
   box-sizing: border-box;
@@ -374,3 +374,9 @@
 .daily-challenges__error a {
   color: inherit;
 }
+
+/* Playful coastal surfaces */
+.daily-challenges article { border-radius: 18px; }
+.daily-challenges article:nth-of-type(odd) { background: #d8eff4; }
+.daily-challenges article:nth-of-type(even) { background: #ffe0d5; }
+.daily-challenges button[type='submit'] { background: #328eab; color: #fff; box-shadow: 0 5px 0 #216c84; }

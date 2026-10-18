@@ -1,16 +1,19 @@
 /* Locked In — Live Feed (matches Leaderboard / clubhouse shell) */
 
 .lf-page {
-  --green-900: #0f1f3d;
-  --green-800: #17305c;
-  --green-700: #284a85;
-  --lime: #f4d35e;
-  --lime-soft: #fbf1cf;
-  --cream: #faf6ec;
-  --card: #fffdf8;
-  --border: #e3ddd0;
-  --text: #0f1c33;
+  --green-900: #244452;
+  --green-800: #2b6578;
+  --green-700: #328eab;
+  --lime: #ffd66b;
+  --lime-soft: #ffe0d5;
+  --cream: #fff9ef;
+  --card: #fff9ef;
+  --border: #d8cfc2;
+  --text: #244452;
   --muted: #6e6f68;
+  --coral: #ff9778;
+  --pale-blue: #d8eff4;
+  --pale-peach: #ffe0d5;
 
   width: 100vw;
   margin-left: calc(50% - 50vw);
@@ -23,6 +26,15 @@
   font-size: 14px;
   line-height: 1.45;
 }
+
+/* Social moments feel bright and active. */
+.lf-live { background: var(--coral); border-color: var(--coral); }
+.lf-composer { border-radius: 18px; background: var(--pale-blue); }
+.lf-submit { background: var(--green-700); color: #fff; box-shadow: 0 4px 0 #216c84; }
+.lf-card { border-radius: 18px; }
+.lf-card:nth-child(3n + 1) { border-left: 8px solid var(--coral); }
+.lf-card:nth-child(3n + 2) { border-left: 8px solid var(--green-700); }
+.lf-card:nth-child(3n) { border-left: 8px solid var(--lime); }
 
 .lf-page *,
 .lf-page *::before,
@@ -246,7 +258,7 @@
 .lf-avatar--me {
   background: var(--lime-soft);
   color: var(--green-900);
-  border: 1px solid #eedb9b;
+  border: 1px solid #f2cfa2;
 }
 
 .lf-avatar img,
@@ -279,7 +291,7 @@
   color: var(--text);
   font: inherit;
   line-height: 1.45;
-  outline-color: #284a85;
+  outline-color: #328eab;
 }
 
 .lf-composer__preview {
@@ -502,12 +514,12 @@
 }
 
 .lf-reaction:hover {
-  border-color: #eedb9b;
+  border-color: #f2cfa2;
   background: var(--lime-soft);
 }
 
 .lf-reaction--active {
-  border-color: #e8bf3a;
+  border-color: #e4ad35;
   background: var(--lime);
   color: var(--green-900);
 }
@@ -644,3 +656,12 @@
   color: var(--muted);
   text-align: center;
 }
+
+/* Final coastal social overrides */
+.lf-live { background: var(--coral); border-color: var(--coral); }
+.lf-composer { border-radius: 18px; background: var(--pale-blue); }
+.lf-submit { background: var(--green-700); color: #fff; box-shadow: 0 4px 0 #216c84; }
+.lf-card { border-radius: 18px; }
+.lf-card:nth-child(3n + 1) { border-left: 8px solid var(--coral); }
+.lf-card:nth-child(3n + 2) { border-left: 8px solid var(--green-700); }
+.lf-card:nth-child(3n) { border-left: 8px solid var(--lime); }
