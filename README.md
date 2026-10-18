@@ -14,7 +14,7 @@ College students know what they should be doing — studying, working out, sleep
 2. **Set a group goal** — Everyone works toward the same weekly objective.
 3. **Compete daily** — Earn points for progress, completed goals, streaks, and group contributions.
 4. **Crown the month** — Highest score becomes **MVP**. Lowest gets **Chud of the Month**.
-5. **Settle up** — Leagues pick their own rewards (cash pot, winner’s dinner covered, group outing) and last place spins a wheel of low-stakes punishments the group invented.
+5. **Settle up** — Leagues pick their own rewards (cash pot, winner’s dinner covered, group outing) and last place completes a "punishment" the group invented.
 
 ## Features
 
