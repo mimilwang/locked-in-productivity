@@ -275,10 +275,10 @@ const pageStyles = `
   .sidebar-note p { margin: 8px 0 0; color: #aebbb1; font-size: 12px; line-height: 1.45; }
   .sidebar-profile { margin-top: 32px; display: flex; align-items: center; gap: 10px; color: inherit; font-size: 12px; text-decoration: none; }
   .sidebar-profile small { display: block; color: #91a096; margin-top: 3px; font-size: 9px; }
-  .avatar { width: 32px; height: 32px; flex: 0 0 auto; display: inline-grid; place-items: center; border-radius: 50%; color: #0f1c33; font-size: 10px; border: 2px solid #faf6ec; }
-  .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+  .avatar { width: 32px; height: 32px; aspect-ratio: 1 / 1; flex: 0 0 32px; overflow: hidden; display: inline-grid; place-items: center; border-radius: 50%; color: #0f1c33; font-size: 10px; border: 2px solid #faf6ec; }
+  .avatar img { display: block; width: 100%; height: 100%; min-width: 100%; object-fit: cover; object-position: center; border-radius: inherit; clip-path: circle(50% at 50% 50%); }
   .avatar-green { background: #f4d35e; }
-  .avatar-small { width: 30px; height: 30px; font-size: 9px; }
+  .avatar-small { width: 30px; height: 30px; flex-basis: 30px; font-size: 9px; }
   .main-shell { min-width: 0; }
   .topbar { height: 68px; padding: 0 35px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #dddcd2; color: #6f7770; font-size: 11px; }
   .content { padding: 38px 40px 20px; max-width: 1350px; margin: 0 auto; }
