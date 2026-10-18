@@ -156,7 +156,7 @@ export default function LeagueOverviewPage({ league, leagues, onSelectLeague }: 
 
           <section className="league-hero">
             <div className="league-hero-copy">
-              <div className="league-meta"><span>PRIVATE LEAGUE</span><span>{league.memberCount} MEMBERS</span><span>{league.readyToStart ? 'SEASON ACTIVE' : 'WAITING FOR PLAYERS'}</span><span className="invite-code-chip">INVITE CODE · {league.inviteCode}</span></div>
+              <div className="league-meta"><span>PRIVATE LEAGUE</span><span>{league.memberCount} MEMBERS</span></div>
               <h2>{league.name}</h2>
               <p>{league.goalDescription} · {league.weeklyTarget} {targetUnit} each week.</p>
               <div className="member-row" aria-label="League members">
