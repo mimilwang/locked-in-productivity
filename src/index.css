@@ -1,4 +1,14 @@
 :root {
+  /* Brand: dark blue on light cream, classic serif headings */
+  --font-display: 'Libre Caslon Text', Georgia, 'Times New Roman', serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --brand-navy: #0f1f3d;
+  --brand-blue: #284a85;
+  --brand-ink: #0f1c33;
+  --brand-cream: #faf6ec;
+  --brand-yellow: #f4d35e; /* accent: buttons, active links, progress bars */
+  --brand-gold: #8a6300; /* accent text on cream */
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -13,4 +23,15 @@
 
 body {
   margin: 0;
+  background: var(--brand-cream);
+  color: var(--brand-ink);
+  font-family: var(--font-body);
+}
+
+/* Headings use the serif everywhere, even where a page sets its own font. */
+h1,
+h2,
+h3 {
+  font-family: var(--font-display) !important;
+  letter-spacing: -0.01em !important;
 }

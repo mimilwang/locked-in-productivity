@@ -41,7 +41,7 @@ function App() {
 }
 
 function NotFound() {
-  return <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#f5f4ec', color: '#17231b', fontFamily: 'system-ui' }}><div><h1>Page not found.</h1><a href="/overview">Return to overview →</a></div></main>
+  return <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#faf6ec', color: '#0f1c33', fontFamily: 'system-ui' }}><div><h1>Page not found.</h1><a href="/overview">Return to overview →</a></div></main>
 }
 
 export default App

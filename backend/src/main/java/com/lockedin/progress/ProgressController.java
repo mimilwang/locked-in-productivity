@@ -1,6 +1,7 @@
 package com.lockedin.progress;
 
 import com.lockedin.common.CurrentUser;
+import com.lockedin.progress.dto.CompleteChallengeRequest;
 import com.lockedin.progress.dto.LogResponse;
 import com.lockedin.progress.dto.ManualLogRequest;
 import com.lockedin.progress.dto.StartTimerRequest;
@@ -64,6 +65,20 @@ public class ProgressController {
     @Operation(summary = "Delete one of your logs")
     public void delete(@PathVariable Long logId) {
         progressService.delete(currentUser.id(), logId);
+    }
+
+    @PostMapping("/leagues/{leagueId}/challenges/complete")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Complete today's daily challenge: bonus points on top, +1 task in task leagues")
+    public LogResponse completeChallenge(@PathVariable Long leagueId, @Valid @RequestBody CompleteChallengeRequest request) {
+        return progressService.completeChallenge(currentUser.id(), leagueId, request);
+    }
+
+    @DeleteMapping("/leagues/{leagueId}/challenges/{challengeId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Undo today's completion of a daily challenge")
+    public void undoChallenge(@PathVariable Long leagueId, @PathVariable String challengeId) {
+        progressService.undoChallenge(currentUser.id(), leagueId, challengeId);
     }
 
     @GetMapping("/leagues/{leagueId}/logs")

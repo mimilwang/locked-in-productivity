@@ -3,18 +3,7 @@ import type { FormEvent, KeyboardEvent } from 'react'
 import './CreateLeague.css'
 import { createLeague } from '../services/leagueService'
 import AppSidebar from '../components/AppSidebar'
-
-// Preset choices for the stakes. "custom" lets the creator type their own.
-const REWARDS = [
-  { id: 'dinner', title: "Winner's dinner is covered", detail: "The crew splits the MVP's meal." },
-  { id: 'cash', title: 'Cash prize', detail: 'Set a small amount together.' },
-  { id: 'activity', title: 'Shared activity', detail: 'Celebrate with the whole crew.' },
-]
-
-const PUNISHMENTS = [
-  { id: 'wheel', title: 'Spin the dare wheel', detail: 'Low-stakes dares, chosen by the group.' },
-  { id: 'snack', title: 'Bring the next group snack', detail: 'Keep it simple and affordable.' },
-]
+import { pendingInviteEmails } from '../lib/invites'
 
 function initials(text: string) {
   return text
@@ -29,14 +18,15 @@ export default function CreateLeague() {
   const [name, setName] = useState('')
   const [goal, setGoal] = useState('')
   const [weeklyReset, setWeeklyReset] = useState('Monday, 12:00 AM')
+  // TIME = target in hours (sent to the backend as minutes). TASKS = target in tasks per week.
+  const [goalType, setGoalType] = useState<'TIME' | 'TASKS'>('TASKS')
+  const [weeklyAmount, setWeeklyAmount] = useState('4')
 
   const [inviteEmail, setInviteEmail] = useState('')
   const [invites, setInvites] = useState<string[]>([])
 
-  const [reward, setReward] = useState('dinner')
-  const [customReward, setCustomReward] = useState('')
-  const [punishment, setPunishment] = useState('wheel')
-  const [customPunishment, setCustomPunishment] = useState('')
+  const [reward, setReward] = useState('')
+  const [punishment, setPunishment] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -61,22 +51,21 @@ export default function CreateLeague() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    const rewardText = reward === 'custom' ? customReward : REWARDS.find((r) => r.id === reward)?.title
-    const punishmentText =
-      punishment === 'custom' ? customPunishment : PUNISHMENTS.find((p) => p.id === punishment)?.title
     setSubmitting(true)
     setError('')
     try {
       await createLeague({
         name,
         goalDescription: goal,
-        goalType: 'TASKS',
-        weeklyTarget: 4,
+        goalType,
+        weeklyTarget: goalType === 'TIME' ? Math.round(Number(weeklyAmount) * 60) : Math.round(Number(weeklyAmount)),
         durationWeeks: 4,
-        reward: rewardText ?? '',
-        punishment: punishmentText ?? '',
+        reward: reward.trim(),
+        punishment: punishment.trim(),
       })
-      window.location.assign('/overview')
+      // createLeague makes the new league active; open it with the invite panel ready to email these friends.
+      if (invites.length) pendingInviteEmails.set(invites)
+      window.location.assign('/league')
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not create your league.')
     } finally {
@@ -156,10 +145,44 @@ export default function CreateLeague() {
                       onChange={(e) => setWeeklyReset(e.target.value)}
                     >
                       <option>Monday, 12:00 AM</option>
-                      <option>Sunday, 12:00 AM</option>
                     </select>
                   </div>
                 </div>
+                <div className="cl-row">
+                  <div>
+                    <label className="cl-label" htmlFor="goal-type">
+                      Goal type
+                    </label>
+                    <select
+                      id="goal-type"
+                      className="cl-input"
+                      value={goalType}
+                      onChange={(e) => setGoalType(e.target.value as 'TIME' | 'TASKS')}
+                    >
+                      <option value="TASKS">Tasks completed</option>
+                      <option value="TIME">Time spent</option>
+                    </select>
+                  </div>
+                  <div className="cl-grow">
+                    <label className="cl-label" htmlFor="weekly-amount">
+                      Weekly target ({goalType === 'TIME' ? 'hours' : 'tasks'} per person)
+                    </label>
+                    <input
+                      id="weekly-amount"
+                      type="number"
+                      className="cl-input"
+                      value={weeklyAmount}
+                      onChange={(e) => setWeeklyAmount(e.target.value)}
+                      min={goalType === 'TIME' ? 0.5 : 1}
+                      max={goalType === 'TIME' ? 168 : 100}
+                      step={goalType === 'TIME' ? 0.5 : 1}
+                      required
+                    />
+                  </div>
+                </div>
+                <p className="cl-hint">
+                  Everyone needs {weeklyAmount || '?'} {goalType === 'TIME' ? 'hours' : 'tasks'} a week. Hitting it = 100 points.
+                </p>
                 <p className="cl-hint">Private by default • 4–15 members • Monthly scores reset on the 1st</p>
               </section>
 
@@ -200,8 +223,8 @@ export default function CreateLeague() {
                   </ul>
                 )}
                 <p className="cl-hint">
-                  You + {invites.length} invited {invites.length === 1 ? 'friend' : 'friends'}. They'll get a private
-                  link when you create the league.
+                  You + {invites.length} invited {invites.length === 1 ? 'friend' : 'friends'}. Right after you create the
+                  league, you'll get your invite code and can email it to them in one click.
                 </p>
               </section>
 
@@ -212,70 +235,37 @@ export default function CreateLeague() {
                 </h2>
 
                 <div className="cl-stakes">
-                  <fieldset className="cl-fieldset">
-                    <legend className="cl-eyebrow">Monthly MVP reward</legend>
-                    {REWARDS.map((option) => (
-                      <ChoiceCard
-                        key={option.id}
-                        name="reward"
-                        {...option}
-                        checked={reward === option.id}
-                        onSelect={setReward}
-                      />
-                    ))}
-                    <ChoiceCard
-                      name="reward"
-                      id="custom"
-                      title="Something else"
-                      detail="Write your own reward."
-                      checked={reward === 'custom'}
-                      onSelect={setReward}
+                  <div>
+                    <label className="cl-label" htmlFor="reward">
+                      MVP Reward
+                    </label>
+                    <input
+                      id="reward"
+                      className="cl-input"
+                      value={reward}
+                      onChange={(e) => setReward(e.target.value)}
+                      placeholder="Winner's dinner is on the crew"
+                      maxLength={200}
+                      required
                     />
-                    {reward === 'custom' && (
-                      <input
-                        className="cl-input"
-                        aria-label="Custom reward"
-                        value={customReward}
-                        onChange={(e) => setCustomReward(e.target.value)}
-                        placeholder="Loser buys boba"
-                        required
-                      />
-                    )}
-                  </fieldset>
+                    <p className="cl-hint">What the top scorer wins at the end of the month.</p>
+                  </div>
 
-                  <fieldset className="cl-fieldset">
-                    <legend className="cl-eyebrow">Last place consequence</legend>
-                    {PUNISHMENTS.map((option) => (
-                      <ChoiceCard
-                        key={option.id}
-                        name="punishment"
-                        {...option}
-                        checked={punishment === option.id}
-                        onSelect={setPunishment}
-                      />
-                    ))}
-                    <ChoiceCard
-                      name="punishment"
-                      id="custom"
-                      title="Something else"
-                      detail="Write your own consequence."
-                      checked={punishment === 'custom'}
-                      onSelect={setPunishment}
+                  <div>
+                    <label className="cl-label" htmlFor="punishment">
+                      Chud Consequence
+                    </label>
+                    <input
+                      id="punishment"
+                      className="cl-input"
+                      value={punishment}
+                      onChange={(e) => setPunishment(e.target.value)}
+                      placeholder="Wears a silly hat to class"
+                      maxLength={200}
+                      required
                     />
-                    {punishment === 'custom' && (
-                      <input
-                        className="cl-input"
-                        aria-label="Custom consequence"
-                        value={customPunishment}
-                        onChange={(e) => setCustomPunishment(e.target.value)}
-                        placeholder="Wears a silly hat to class"
-                        required
-                      />
-                    )}
-                    <p className="cl-hint">
-                      Keep it kind. Everyone can suggest dares and pass if they're uncomfortable.
-                    </p>
-                  </fieldset>
+                    <p className="cl-hint">What last place has to do. Keep it kind and low-stakes.</p>
+                  </div>
                 </div>
               </section>
             </div>
@@ -306,18 +296,18 @@ export default function CreateLeague() {
 
               <div className="cl-card cl-points">
                 <p className="cl-eyebrow">Your league's points</p>
-                <p>Log a session +40 • Hit your weekly goal +50 • Keep a 3+ day streak +25 per check-in</p>
-                <p className="cl-hint">Example league scoring. Agree on your rules together before the season starts.</p>
+                <p>1 point for every 1% of the weekly goal, up to 100 points a week.</p>
+                <p className="cl-hint">Points update every time you log and reset each Monday. Streaks are for bragging rights.</p>
               </div>
 
               <p className="cl-hint">
-                The MVP has the highest monthly score. The lowest score earns "Chud of the Month" — and a friendly spin.
+                The MVP has the highest monthly score and wins the MVP Reward. The lowest score earns "Chud of the Month" and the Chud Consequence.
               </p>
             </aside>
           </div>
 
           <div className="cl-submit-bar">
-            <p className="cl-hint">{error || 'Invites are private. Rewards and dares are always a group decision.'}</p>
+            <p className="cl-hint">{error || 'Invites are private. Rewards and consequences are always a group decision.'}</p>
             <button type="submit" className="cl-btn cl-btn--primary" disabled={submitting}>
               {submitting ? 'Creating league…' : 'Create league & send invites →'}
             </button>
@@ -330,33 +320,5 @@ export default function CreateLeague() {
         </footer>
       </div>
     </div>
-  )
-}
-
-// A radio button styled as a selectable card.
-function ChoiceCard(props: {
-  name: string
-  id: string
-  title: string
-  detail: string
-  checked: boolean
-  onSelect: (id: string) => void
-}) {
-  const inputId = `${props.name}-${props.id}`
-  return (
-    <label htmlFor={inputId} className={`cl-choice ${props.checked ? 'cl-choice--selected' : ''}`}>
-      <input
-        id={inputId}
-        type="radio"
-        name={props.name}
-        value={props.id}
-        checked={props.checked}
-        onChange={() => props.onSelect(props.id)}
-      />
-      <span>
-        <span className="cl-choice-title">{props.title}</span>
-        <span className="cl-choice-detail">{props.detail}</span>
-      </span>
-    </label>
   )
 }

@@ -1,0 +1,115 @@
+.invite {
+  position: relative;
+}
+
+.invite__toggle {
+  padding: 14px 18px;
+  border: 1.5px solid var(--brand-navy, #0f1f3d);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--brand-navy, #0f1f3d);
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.invite__toggle:hover,
+.invite__toggle[aria-expanded='true'] {
+  background: var(--brand-navy, #0f1f3d);
+  color: var(--brand-cream, #faf6ec);
+}
+
+.invite__panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 50;
+  width: min(340px, calc(100vw - 32px));
+  padding: 18px;
+  border: 1px solid #e3ddd0;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 16px 40px rgba(15, 31, 61, 0.18);
+  text-align: left;
+}
+
+.invite__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.invite__label {
+  display: block;
+  margin: 0 0 8px;
+  color: #6e6f68;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.invite__close {
+  border: 0;
+  background: none;
+  color: #6e6f68;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.invite__code-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--brand-cream, #faf6ec);
+}
+
+.invite__code {
+  color: var(--brand-navy, #0f1f3d);
+  font: 800 26px/1 ui-monospace, Menlo, monospace;
+  letter-spacing: 0.18em;
+}
+
+.invite__code-row button,
+.invite__send {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 5px;
+  background: var(--brand-yellow, #f4d35e);
+  color: var(--brand-ink, #0f1c33);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.invite__hint {
+  margin: 6px 0 14px;
+  color: #6e6f68;
+  font-size: 11px;
+}
+
+.invite__panel textarea {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border: 1px solid #d6d9d0;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+  resize: vertical;
+}
+
+.invite__send {
+  display: block;
+  text-align: center;
+}
+
+.invite__send--disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
