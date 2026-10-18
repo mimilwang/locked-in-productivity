@@ -32,13 +32,10 @@ function localToday() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-export default function LeagueOverviewPage({ league, leagues, onSelectLeague, onJoinLeague }: { league: League; leagues: League[]; onSelectLeague: (league: League) => void; onJoinLeague: (code: string) => Promise<void> }) {
+export default function LeagueOverviewPage({ league, leagues, onSelectLeague }: { league: League; leagues: League[]; onSelectLeague: (league: League) => void }) {
+  const [overview, setOverview] = useState<LeagueOverviewData | null>(null)
   const [logs, setLogs] = useState<ProgressLog[]>([])
   const [members, setMembers] = useState<LeagueMember[]>([])
-  const [overview, setOverview] = useState<LeagueOverviewData | null>(null)
-  const [joinCode, setJoinCode] = useState('')
-  const [joinError, setJoinError] = useState('')
-  const [joining, setJoining] = useState(false)
   const user = cachedUser()
   const dashboardLeaders: Leader[] = overview?.weeklyLeaderboard.map((entry, index) => ({
     rank: entry.rank,
@@ -132,26 +129,9 @@ export default function LeagueOverviewPage({ league, leagues, onSelectLeague, on
               </select>
             </div>
             <div className="league-switcher__actions">
-              <a href="/create-league">+ Create league</a>
-              <form onSubmit={async (event) => {
-                event.preventDefault()
-                setJoining(true)
-                setJoinError('')
-                try {
-                  await onJoinLeague(joinCode)
-                  setJoinCode('')
-                } catch (caught) {
-                  setJoinError(caught instanceof Error ? caught.message : 'Could not join that league.')
-                } finally {
-                  setJoining(false)
-                }
-              }}>
-                <input aria-label="League invite code" placeholder="INVITE CODE" value={joinCode} onChange={(event) => setJoinCode(event.target.value.toUpperCase())} />
-                <button disabled={joining || !joinCode.trim()}>{joining ? 'Joining…' : 'Join'}</button>
-              </form>
+              <span className="league-switcher__code">INVITE CODE: <strong>{league.inviteCode}</strong></span>
             </div>
           </section>
-          {joinError && <div className="league-switcher__error" role="alert">{joinError}</div>}
           <section className="welcome">
             <div>
               <p className="eyebrow">{league.name.toUpperCase()} / CURRENT SEASON</p>
@@ -310,11 +290,10 @@ const pageStyles = `
   .league-switcher { margin-bottom: 20px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid #dbddd2; border-radius: 7px; background: #fff; }
   .league-switcher > div:first-child { display: flex; align-items: center; gap: 12px; }
   .league-switcher span { color: #788078; font-size: 9px; font-weight: 800; letter-spacing: .1em; }
-  .league-switcher select, .league-switcher input { height: 36px; padding: 0 11px; border: 1px solid #d6d9d0; border-radius: 4px; background: #fdfaf2; color: #0f1c33; font-weight: 800; }
-  .league-switcher__actions, .league-switcher__actions form { display: flex; align-items: center; gap: 8px; }
-  .league-switcher__actions a, .league-switcher button { min-height: 36px; padding: 0 12px; display: inline-flex; align-items: center; border: 0; border-radius: 4px; background: #f4d35e; color: #0f1c33; font-size: 10px; font-weight: 900; text-decoration: none; cursor: pointer; }
-  .league-switcher button:disabled { opacity: .5; cursor: default; }
-  .league-switcher__error { margin: -10px 0 18px; padding: 10px 12px; border-radius: 5px; background: #fff0ed; color: #8d2e21; font-size: 11px; }
+  .league-switcher select { height: 36px; padding: 0 11px; border: 1px solid #d6d9d0; border-radius: 4px; background: #f9faf5; color: #17231b; font-weight: 800; }
+  .league-switcher__actions { display: flex; align-items: center; gap: 8px; }
+  .league-switcher .league-switcher__code { padding: 10px 12px; border-radius: 4px; background: #eff9da; color: #526c2c; font-size: 10px; font-weight: 700; letter-spacing: .08em; }
+  .league-switcher .league-switcher__code strong { color: #17231b; font-family: monospace; font-size: 12px; letter-spacing: .12em; }
   .score-label { margin-bottom: 10px; font-size: 9px; letter-spacing: .13em; }
   .stats-strip { margin: 18px 0; display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid #dbddd2; border-radius: 7px; background: #fff; }
   .stats-strip article { padding: 20px 22px; border-right: 1px solid #e3e4dc; }
@@ -382,8 +361,8 @@ const pageStyles = `
     .topbar > span { display: none; }
     .content { padding: 28px 18px 18px; }
     .league-switcher, .league-switcher__actions { align-items: stretch; flex-direction: column; }
-    .league-switcher > div:first-child, .league-switcher__actions form { width: 100%; }
-    .league-switcher select, .league-switcher input { flex: 1; min-width: 0; }
+    .league-switcher > div:first-child { width: 100%; }
+    .league-switcher select { flex: 1; min-width: 0; }
     .welcome { align-items: stretch; flex-direction: column; }
     .league-hero { grid-template-columns: 1fr; }
     .hero-score { padding: 20px; flex-direction: row; gap: 15px; }
