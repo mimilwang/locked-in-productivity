@@ -148,7 +148,8 @@ function buildSlides({ league, monthName, final, ranked, hasLastMonth }: RecapDa
 
   const byDesc = (key: (m: Member) => number) => [...ranked].sort((a, b) => key(b) - key(a))[0]
   const mostImproved = hasLastMonth ? byDesc((m) => m.improvement ?? 0) : null
-  const mostMinutes = byDesc((m) => m.minutes)
+  const isTasksGoal = league.goalType === 'TASKS'
+  const volumeLeader = byDesc((m) => (isTasksGoal ? m.sessions : m.minutes))
   const nightOwl = byDesc((m) => m.lateNightSessions)
   const mostSessions = [...ranked].filter((m) => m.id !== mvp.id).sort((a, b) => b.sessions - a.sessions)[0] ?? mvp
   const soFar = final ? '' : ' so far'
@@ -214,9 +215,15 @@ function buildSlides({ league, monthName, final, ranked, hasLastMonth }: RecapDa
               </div>
             ) : (
               <div className="mr-award mr-anim mr-d2">
-                <span className="mr-award-title">Most minutes</span>
-                <span className="mr-award-name">{first(mostMinutes.name)}</span>
-                <span className="mr-award-detail">{mostMinutes.minutes} minutes logged</span>
+                <span className="mr-award-title">
+                  {isTasksGoal ? 'Most tasks' : 'Most minutes'}
+                </span>
+                <span className="mr-award-name">{first(volumeLeader.name)}</span>
+                <span className="mr-award-detail">
+                  {isTasksGoal
+                    ? `${volumeLeader.sessions} tasks logged`
+                    : `${volumeLeader.minutes} minutes logged`}
+                </span>
               </div>
             )}
             <div className="mr-award mr-anim mr-d3">
