@@ -3,6 +3,7 @@ import type { FormEvent, KeyboardEvent } from 'react'
 import './CreateLeague.css'
 import { createLeague } from '../services/leagueService'
 import AppSidebar from '../components/AppSidebar'
+import { pendingInviteEmails } from '../lib/invites'
 
 function initials(text: string) {
   return text
@@ -62,7 +63,9 @@ export default function CreateLeague() {
         reward: reward.trim(),
         punishment: punishment.trim(),
       })
-      window.location.assign('/overview')
+      // createLeague makes the new league active; open it with the invite panel ready to email these friends.
+      if (invites.length) pendingInviteEmails.set(invites)
+      window.location.assign('/league')
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not create your league.')
     } finally {
@@ -220,8 +223,8 @@ export default function CreateLeague() {
                   </ul>
                 )}
                 <p className="cl-hint">
-                  You + {invites.length} invited {invites.length === 1 ? 'friend' : 'friends'}. They'll get a private
-                  link when you create the league.
+                  You + {invites.length} invited {invites.length === 1 ? 'friend' : 'friends'}. Right after you create the
+                  league, you'll get your invite code and can email it to them in one click.
                 </p>
               </section>
 

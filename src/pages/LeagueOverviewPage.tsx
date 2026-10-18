@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { formatRelativeTime } from '../lib/liveFeed'
 import AppSidebar from '../components/AppSidebar'
 import Confetti from '../components/Confetti'
+import InvitePanel from '../components/InvitePanel'
+import { pendingInviteEmails } from '../lib/invites'
 import { cachedUser } from '../services/authService'
 import { getLeagueLogs, getLeagueMembers, getLeagueOverview } from '../services/leagueService'
 import type { League, LeagueMember, LeagueOverviewData, ProgressLog } from '../services/leagueService'
@@ -77,6 +79,12 @@ export default function LeagueOverviewPage({ league, leagues, onSelectLeague, on
   // Confetti the first time you see that you've hit 100% of this week's goal (once per league per week).
   const hitGoal = !!overview && overview.myWeeklyProgress >= league.weeklyTarget
   const [celebrate, setCelebrate] = useState(false)
+  // Emails typed while creating this league: open the invite panel with them filled in.
+  const [newLeagueEmails] = useState(() => {
+    const emails = pendingInviteEmails.get()
+    pendingInviteEmails.clear()
+    return emails
+  })
   useEffect(() => {
     if (!hitGoal || !overview) return
     const key = `locked-in:celebrated:${league.id}:${overview.weekStart}`
@@ -150,12 +158,15 @@ export default function LeagueOverviewPage({ league, leagues, onSelectLeague, on
               <h1>Lock in.</h1>
               <p className="subhead">Welcome back, {user?.displayName || user?.name || 'player'}. Your people are showing up. You in?</p>
             </div>
-            <a className="primary-button" href="/timer">Lock in now →</a>
+            <div className="welcome-actions">
+              <InvitePanel key={league.id} league={league} initialEmails={newLeagueEmails} startOpen={newLeagueEmails.length > 0} />
+              <a className="primary-button" href="/timer">Lock in now →</a>
+            </div>
           </section>
 
           <section className="league-hero">
             <div className="league-hero-copy">
-              <div className="league-meta"><span>PRIVATE LEAGUE</span><span>{league.memberCount} MEMBERS</span><span>{league.readyToStart ? 'SEASON ACTIVE' : 'WAITING FOR PLAYERS'}</span></div>
+              <div className="league-meta"><span>PRIVATE LEAGUE</span><span>{league.memberCount} MEMBERS</span><span>{league.readyToStart ? 'SEASON ACTIVE' : 'WAITING FOR PLAYERS'}</span><span className="invite-code-chip">INVITE CODE · {league.inviteCode}</span></div>
               <h2>{league.name}</h2>
               <p>{league.goalDescription} · {league.weeklyTarget} {targetUnit} each week.</p>
               <div className="member-row" aria-label="League members">
@@ -280,6 +291,8 @@ const pageStyles = `
   .welcome { display: flex; align-items: flex-end; justify-content: space-between; gap: 30px; margin-bottom: 30px; }
   .welcome h1 { margin: 0 0 7px; color: #0f1c33; font: 800 clamp(35px, 4vw, 56px)/1 Impact, 'Arial Narrow', sans-serif; letter-spacing: .015em; }
   .subhead { margin: 0; color: #747a74; font-size: 13px; }
+  .welcome-actions { display: flex; align-items: center; gap: 10px; }
+  .invite-code-chip { color: #f4d35e !important; letter-spacing: .14em; }
   .primary-button { padding: 14px 20px; border: 0; border-radius: 5px; background: #f4d35e; color: #0f1c33; font-weight: 800; cursor: pointer; white-space: nowrap; text-decoration: none; }
   .primary-button.complete { background: #fbf1cf; color: #41598a; cursor: default; }
   .league-hero { min-height: 230px; display: grid; grid-template-columns: 1fr 260px; overflow: hidden; border-radius: 8px; background: #0f1f3d; color: white; }
