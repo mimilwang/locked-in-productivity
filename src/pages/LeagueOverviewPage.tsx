@@ -378,6 +378,7 @@ const pageStyles = `
     .topbar > span { display: none; }
     .content { padding: 28px 18px 18px; }
     .welcome-controls { width: 100%; align-items: stretch; }
+    .welcome-actions { justify-content: center; }
     .league-switcher { align-items: stretch; flex-direction: column; }
     .league-switcher > div:first-child { width: 100%; }
     .league-switcher select { flex: 1; min-width: 0; }
