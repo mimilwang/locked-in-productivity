@@ -33,8 +33,9 @@ function localToday() {
 }
 
 export default function LeagueOverviewPage({ league, leagues, onSelectLeague }: { league: League; leagues: League[]; onSelectLeague: (league: League) => void }) {
-  const [focusSessions] = useState(() => getFocusSessions())
   const [overview, setOverview] = useState<LeagueOverviewData | null>(null)
+  const [logs, setLogs] = useState<ProgressLog[]>([])
+  const [members, setMembers] = useState<LeagueMember[]>([])
   const user = cachedUser()
   const dashboardLeaders: Leader[] = overview?.weeklyLeaderboard.map((entry, index) => ({
     rank: entry.rank,
