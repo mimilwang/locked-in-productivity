@@ -3,13 +3,15 @@ package com.lockedin.account.images;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 /**
  * Profile / league / feed image bytes kept in the database so they travel with the user
- * across devices and survive ephemeral container disks (unlike a local uploads/ folder).
+ * across devices and survive ephemeral Render disks (unlike a local uploads/ folder).
+ * Uses BINARY/BYTEA (not Postgres OID LOBs) so Render Postgres stores them cleanly.
  */
 @Entity
 @Table(name = "stored_images")
@@ -22,8 +24,8 @@ public class StoredImage {
     @Column(nullable = false, length = 64)
     private String contentType;
 
-    @Lob
-    @Column(nullable = false)
+    @JdbcTypeCode(SqlTypes.BINARY)
+    @Column(nullable = false, columnDefinition = "BYTEA")
     private byte[] data;
 
     @Column(nullable = false)

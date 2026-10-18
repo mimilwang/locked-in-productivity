@@ -30,11 +30,12 @@ auth:
   # Set to false before deploying.
   dev-header-enabled: ${DEV_HEADER_ENABLED:true}
 
+# Override in production with APP_CORS_ALLOWED_ORIGINS (comma-separated), e.g. your Vercel URL.
 app:
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+    allowed-origins: http://localhost:5173
 
-# Legacy: images are stored in the database now (stored_images table). UPLOAD_DIR is unused.
+# Legacy unused: image bytes are in stored_images (DB), not on disk — required on Render's ephemeral FS.
 images:
   upload-dir: ${UPLOAD_DIR:uploads}
 
