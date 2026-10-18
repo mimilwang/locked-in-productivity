@@ -59,7 +59,8 @@
 .app-sidebar .app-sidebar__profile { width: 100%; margin: auto 0 0; display: flex; align-items: center; gap: 10px; color: #eef3ef; font-size: 11px; line-height: 13px; text-decoration: none; }
 .app-sidebar .app-sidebar__profile strong { font-size: 11px; line-height: 13px; }
 .app-sidebar .app-sidebar__profile:hover strong { color: #f4d35e; }
-.app-sidebar .app-sidebar__avatar { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; border-radius: 50%; background: #f4d35e; color: #0f1c33; font-size: 9px; line-height: 1; }
+.app-sidebar .app-sidebar__avatar { width: 32px; height: 32px; flex: 0 0 32px; overflow: hidden; display: grid; place-items: center; border-radius: 50%; background: #f4d35e; color: #0f1c33; font-size: 9px; line-height: 1; }
+.app-sidebar .app-sidebar__avatar img { width: 100%; height: 100%; object-fit: cover; }
 .app-sidebar .app-sidebar__profile small { max-width: 130px; margin: 3px 0 0; display: block; overflow: hidden; color: #91a096; font-size: 8px; font-weight: 400; line-height: 10px; text-overflow: ellipsis; white-space: nowrap; }
 
 .app-page-with-sidebar { min-height: 100vh; display: grid; grid-template-columns: 220px minmax(0, 1fr); }

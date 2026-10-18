@@ -1,6 +1,7 @@
 import { cachedUser } from '../services/authService'
 import { getCachedLeague } from '../services/leagueService'
 import './AppSidebar.css'
+import { resolveImageUrl } from '../services/imageService'
 
 export type SidebarPage =
   | 'leagues'
@@ -55,7 +56,7 @@ export default function AppSidebar({ active, clubhouseOnly = false }: { active: 
       </nav>
 
       <a className="app-sidebar__profile" href="/profile" aria-current={active === 'profile' ? 'page' : undefined}>
-        <span className="app-sidebar__avatar">{initials(name)}</span>
+        <span className="app-sidebar__avatar">{user?.photoUrl ? <img src={resolveImageUrl(user.photoUrl)} alt="" /> : initials(name)}</span>
         <span><strong>{name}</strong><small>{user?.school || 'View your profile'}</small></span>
       </a>
     </aside>
