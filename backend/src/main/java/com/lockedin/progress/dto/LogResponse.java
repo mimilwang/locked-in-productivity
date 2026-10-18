@@ -21,12 +21,13 @@ public record LogResponse(
         String title,
         List<String> photoUrls,
         String challengeId,
-        int bonusPoints) {
+        int bonusPoints,
+        Long buddyUserId) {
 
     public static LogResponse from(ProgressLog log) {
         return new LogResponse(log.getId(), log.getUserId(), log.getLeagueId(), log.getStartedAt(),
                 log.getEndedAt(), log.getDurationMinutes(), log.getSource(), log.getLocalDate(),
                 log.getNote(), log.isRunning(), log.getTitle(), List.copyOf(log.getPhotoUrls()),
-                log.getChallengeId(), log.getBonusPoints());
+                log.getChallengeId(), log.getBonusPoints(), log.getBuddyUserId());
     }
 }

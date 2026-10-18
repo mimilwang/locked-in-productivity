@@ -120,19 +120,45 @@ function ActivityCard({
 function logsToActivities(logs: ProgressLog[], members: LeagueMember[], league: League): FeedActivity[] {
   return logs
     .filter((log) => !log.running)
-    .map((log) => ({
-      id: `log-${log.id}`,
-      leagueId: String(league.id),
-      type: 'session' as const,
-      actor: {
-        id: String(log.userId),
-        name: members.find((m) => m.userId === log.userId)?.displayName ?? 'A member',
-      },
-      headline: league.goalType === 'TIME' ? `logged ${log.durationMinutes} minutes` : 'completed a task',
-      detail: log.note ?? undefined,
-      createdAt: log.endedAt ?? log.startedAt,
-      reactions: [],
-    }))
+    .map((log) => {
+      const actorName =
+        members.find((m) => m.userId === log.userId)?.displayName ?? 'A member'
+      const buddyName = log.buddyUserId
+        ? members.find((m) => m.userId === log.buddyUserId)?.displayName
+        : undefined
+
+      if (log.source === 'CHALLENGE') {
+        const title = log.title?.trim() || 'a daily challenge'
+        const pts = log.bonusPoints ?? 0
+        return {
+          id: `log-${log.id}`,
+          leagueId: String(league.id),
+          type: 'challenge' as const,
+          actor: { id: String(log.userId), name: actorName },
+          headline: `completed “${title}”`,
+          detail: buddyName
+            ? `with ${buddyName}`
+            : log.note ?? undefined,
+          points: pts > 0 ? pts : undefined,
+          createdAt: log.endedAt ?? log.startedAt,
+          reactions: [],
+        }
+      }
+
+      return {
+        id: `log-${log.id}`,
+        leagueId: String(league.id),
+        type: 'session' as const,
+        actor: { id: String(log.userId), name: actorName },
+        headline:
+          league.goalType === 'TIME'
+            ? `logged ${log.durationMinutes} minutes`
+            : 'completed a task',
+        detail: log.note ?? undefined,
+        createdAt: log.endedAt ?? log.startedAt,
+        reactions: [],
+      }
+    })
 }
 
 export default function LiveFeedPage() {

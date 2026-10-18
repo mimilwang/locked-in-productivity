@@ -267,7 +267,8 @@
   font-weight: 750;
 }
 
-.challenge-card__note input {
+.challenge-card__note input,
+.challenge-card__note select {
   width: 100%;
   min-height: 48px;
   padding: 0.75rem 0.9rem;
@@ -319,8 +320,13 @@
   font-weight: 900;
 }
 
-.btn--primary:hover {
+.btn--primary:hover:not(:disabled) {
   filter: brightness(0.97);
+}
+
+.btn--primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .btn--ghost {
