@@ -106,7 +106,7 @@ export default function LeagueOverviewPage({ league, leagues, onSelectLeague, on
               <h1>Lock in.</h1>
               <p className="subhead">Welcome back, {user?.displayName || user?.name || 'player'}. Your people are showing up. You in?</p>
             </div>
-            <a className="primary-button" href="/timer">Check in now →</a>
+            <a className="primary-button" href="/timer">Lock in now →</a>
           </section>
 
           <section className="league-hero">
