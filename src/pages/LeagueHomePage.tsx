@@ -45,7 +45,7 @@ export default function LeagueHomePage() {
     setActiveLeagueId(league.id)
   }
 
-  if (activeLeague) return <LeagueOverviewPage league={activeLeague} leagues={leagues ?? []} onSelectLeague={selectLeague} onJoinLeague={(code) => join(code, true)} />
+  if (activeLeague) return <LeagueOverviewPage league={activeLeague} leagues={leagues ?? []} onSelectLeague={selectLeague} />
 
   return <div className="app-page-with-sidebar"><AppSidebar active="leagues" /><main className="league-gate"><style>{gateStyles}</style><section>{leagues === undefined && !error ? <p>Loading your clubhouse…</p> : <><p className="gate-kicker">YOUR CLUBHOUSE</p><h1>Find your people.<br />Start showing up.</h1><p className="gate-intro">Create leagues for different goals or join your friends with a private invite code.</p>{error && <div className="gate-error">{error}</div>}<div className="gate-options"><article><span>01</span><h2>Start a league</h2><p>Choose the shared goal, reward, and last-place consequence.</p><a href="/create-league">Create your league →</a></article><article><span>02</span><h2>Join your crew</h2><p>League invite codes are private and can only be used by signed-in players.</p><label>INVITE CODE<input value={inviteCode} onChange={(event) => setInviteCode(event.target.value.toUpperCase())} placeholder="LOCKED24" /></label><button onClick={() => void join()} disabled={joining || !inviteCode.trim()}>{joining ? 'Joining…' : 'Join league →'}</button></article></div></>}</section></main></div>
 }
