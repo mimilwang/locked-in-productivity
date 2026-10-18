@@ -68,6 +68,10 @@ export type ProgressLog = {
   localDate: string
   note: string | null
   running: boolean
+  title: string | null
+  photoUrls: string[]
+  challengeId: string | null
+  bonusPoints: number
 }
 
 const ACTIVE_LEAGUE_KEY = 'locked-in:active-league-id'
