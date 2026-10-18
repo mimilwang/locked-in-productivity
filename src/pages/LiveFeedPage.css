@@ -499,6 +499,95 @@
   color: var(--green-900);
 }
 
+.lf-replies {
+  margin: 14px 0 0 54px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.lf-reply {
+  display: flex;
+  gap: 9px;
+  margin-bottom: 10px;
+}
+
+.lf-reply__avatar {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--lime-soft);
+  color: var(--green-900);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.lf-reply p {
+  flex: 1;
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: #f4f1e9;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.lf-reply p strong {
+  margin-right: 4px;
+}
+
+.lf-reply p small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.lf-reply-form {
+  display: flex;
+  gap: 8px;
+}
+
+.lf-reply-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+
+.lf-reply-form button {
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--green-900);
+  color: #fff;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.lf-reply-form button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.lf-error {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid #e3b2a9;
+  border-radius: 8px;
+  background: #fff0ed;
+  color: #8d2e21;
+  font-size: 12px;
+}
+
 @media (max-width: 860px) {
   .lf-page {
     flex-direction: column;
@@ -518,6 +607,10 @@
   .lf-card__detail,
   .lf-card__photo,
   .lf-reactions {
+    margin-left: 0;
+  }
+
+  .lf-replies {
     margin-left: 0;
   }
 

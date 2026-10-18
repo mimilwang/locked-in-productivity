@@ -19,6 +19,13 @@ export interface ActivityReaction {
   userIds: string[]
 }
 
+export interface FeedReply {
+  id: string
+  actor: FeedMember
+  body: string
+  createdAt: string
+}
+
 export interface FeedActivity {
   id: string
   leagueId: string
@@ -31,4 +38,5 @@ export interface FeedActivity {
   imageUrl?: string
   createdAt: string
   reactions: ActivityReaction[]
+  replies?: FeedReply[]
 }
