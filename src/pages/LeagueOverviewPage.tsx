@@ -287,7 +287,7 @@ const pageStyles = `
   .subhead { margin: 0; color: #747a74; font-size: 13px; }
   .welcome-actions { display: flex; align-items: center; gap: 10px; }
   .invite-code-chip { color: #ffd66b !important; letter-spacing: .14em; }
-  .primary-button { padding: 14px 20px; border: 0; border-radius: 12px; background: #328eab; color: #244452; font-weight: 800; cursor: pointer; white-space: nowrap; text-decoration: none; }
+  .primary-button { width: 172px; height: 48px; padding: 0 20px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 12px; background: #328eab; color: #fff; font-size: 16px; line-height: 20px; font-weight: 800; cursor: pointer; white-space: nowrap; text-decoration: none; }
   .primary-button.complete { background: #ffe0d5; color: #41598a; cursor: default; }
   .league-hero { min-height: 230px; display: grid; grid-template-columns: 1fr 260px; overflow: hidden; border-radius: 20px; background: #328eab; color: white; }
   .league-hero-copy { padding: 34px; }
@@ -304,7 +304,7 @@ const pageStyles = `
   .league-switcher { margin-bottom: 20px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid #d8cfc2; border-radius: 7px; background: #fff; }
   .league-switcher > div:first-child { display: flex; align-items: center; gap: 12px; }
   .league-switcher span { color: #788078; font-size: 9px; font-weight: 800; letter-spacing: .1em; }
-  .league-switcher select { height: 36px; padding: 0 11px; border: 1px solid #d6d9d0; border-radius: 4px; background: #f9faf5; color: #17231b; font-weight: 800; }
+  .league-switcher select { height: 46px; padding: 0 36px 0 14px; border: 1px solid #d6d9d0; border-radius: 12px; background: #f9faf5; color: #17231b; font-weight: 800; cursor: pointer; }
   .league-switcher__actions { display: flex; align-items: center; gap: 8px; }
   .league-switcher .league-switcher__code { padding: 10px 12px; border-radius: 4px; background: #eff9da; color: #526c2c; font-size: 10px; font-weight: 700; letter-spacing: .08em; }
   .league-switcher .league-switcher__code strong { color: #17231b; font-family: monospace; font-size: 12px; letter-spacing: .12em; }

@@ -3,14 +3,28 @@
 }
 
 .invite__toggle {
-  padding: 14px 18px;
+  width: 172px;
+  height: 48px;
+  padding: 0 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  box-sizing: border-box;
   border: 1.5px solid var(--brand-navy, #244452);
-  border-radius: 5px;
+  border-radius: 12px;
   background: transparent;
   color: var(--brand-navy, #244452);
+  font-size: 16px;
+  line-height: 20px;
   font-weight: 800;
   white-space: nowrap;
   cursor: pointer;
+}
+
+.invite__toggle-icon {
+  font-size: 26px;
+  line-height: 20px;
 }
 
 .invite__toggle:hover,
