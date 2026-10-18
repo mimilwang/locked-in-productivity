@@ -1,11 +1,23 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import './Dashboard.css'
+import { cachedUser, getMyProfile } from '../services/authService'
+import {
+  getLeagueLogs,
+  getLeagueMembers,
+  getLeagueOverview,
+  getMyLeagues,
+  joinLeague,
+  setActiveLeague,
+} from '../services/leagueService'
+import type { League } from '../services/leagueService'
+import type { UserProfile } from '../types/api'
+import AppSidebar from '../components/AppSidebar'
 
 // ---------- Mock data (replace with real data from the backend later) ----------
 
 type LeagueSummary = {
-  id: string
+  id: number
   name: string
   goal: string // e.g. "Focused study sessions"
   weeklyTarget: number // e.g. 4
@@ -17,62 +29,12 @@ type LeagueSummary = {
   leaderName: string
   leaderPoints: number
   checkedInToday: boolean
-  members: string[] // member names, for the avatar stack
+  members: Array<{ id: number; name: string; avatarUrl: string | null }>
   color: string // card cover color
+  league: League
 }
 
-const USER = { name: 'Alex Chen', school: 'University of Washington' }
-
-const LEAGUES: LeagueSummary[] = [
-  {
-    id: '8am-club',
-    name: 'The 8 AM Club',
-    goal: 'Focused study sessions',
-    weeklyTarget: 4,
-    myWeekDone: 3,
-    myRank: 2,
-    memberCount: 6,
-    myPoints: 780,
-    myStreak: 8,
-    leaderName: 'Maya Patel',
-    leaderPoints: 860,
-    checkedInToday: true,
-    members: ['Maya Patel', 'Alex Chen', 'Jay Park', 'Nia Brooks', 'Leo Martinez', 'Sam Wilson'],
-    color: '#13261b',
-  },
-  {
-    id: 'gym-rats',
-    name: 'Gym Rats',
-    goal: 'Gym sessions',
-    weeklyTarget: 3,
-    myWeekDone: 1,
-    myRank: 4,
-    memberCount: 5,
-    myPoints: 410,
-    myStreak: 0,
-    leaderName: 'Jordan Lee',
-    leaderPoints: 620,
-    checkedInToday: false,
-    members: ['Jordan Lee', 'Alex Chen', 'Priya Shah', 'Marcus Hill', 'Tess Ng'],
-    color: '#2c4a37',
-  },
-  {
-    id: 'page-turners',
-    name: 'Page Turners',
-    goal: 'Read for 30 minutes',
-    weeklyTarget: 5,
-    myWeekDone: 5,
-    myRank: 1,
-    memberCount: 4,
-    myPoints: 540,
-    myStreak: 15,
-    leaderName: 'Alex Chen',
-    leaderPoints: 540,
-    checkedInToday: false,
-    members: ['Alex Chen', 'Rosa Diaz', 'Ben Cho', 'Ivy Moore'],
-    color: '#3f3a24',
-  },
-]
+const CARD_COLORS = ['#13261b', '#2c4a37', '#3f3a24', '#24384c', '#4b2f35', '#34452a']
 
 // ---------- Helpers ----------
 
@@ -116,72 +78,99 @@ function daysLeftInMonth(today: Date) {
 
 // ---------- Page ----------
 
-type DashboardProps = {
-  // Hook these up to navigation later. Until then they log to the console.
-  onOpenLeague?: (leagueId: string) => void
-  onCreateLeague?: () => void
-  onJoinLeague?: (code: string) => void
-}
-
-export default function Dashboard({
-  onOpenLeague = (id) => console.log('Open league', id),
-  onCreateLeague = () => console.log('Create league'),
-  onJoinLeague = (code) => console.log('Join league with code', code),
-}: DashboardProps) {
+export default function Dashboard() {
   const [today] = useState(() => new Date()) // read the date once when the page loads
   const [joinCode, setJoinCode] = useState('')
   const [quoteIndex, setQuoteIndex] = useState(() => Math.floor(Math.random() * QUOTES.length)) // random quote on load
+  const [user, setUser] = useState<UserProfile | null>(() => cachedUser())
+  const [leagues, setLeagues] = useState<LeagueSummary[]>([])
+  const [loading, setLoading] = useState(true)
+  const [joining, setJoining] = useState(false)
+  const [error, setError] = useState('')
   const quote = QUOTES[quoteIndex]
+  const userName = user?.displayName || user?.name || 'Player'
 
   const daysLeft = daysLeftInMonth(today)
   const monthName = today.toLocaleDateString('en-US', { month: 'long' })
   const dateLabel = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadDashboard() {
+      setLoading(true)
+      setError('')
+      try {
+        const [profile, memberships] = await Promise.all([getMyProfile(), getMyLeagues()])
+        const todayKey = new Intl.DateTimeFormat('en-CA', { timeZone: profile.timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(today)
+        const summaries = await Promise.all(memberships.map(async (league, index): Promise<LeagueSummary> => {
+          const [overview, members, logs] = await Promise.all([
+            getLeagueOverview(league.id),
+            getLeagueMembers(league.id),
+            getLeagueLogs(league.id, profile.id),
+          ])
+          const mine = overview.weeklyLeaderboard.find((entry) => entry.userId === profile.id)
+          const leader = overview.weeklyLeaderboard[0]
+          return {
+            id: league.id,
+            name: league.name,
+            goal: league.goalDescription,
+            weeklyTarget: league.weeklyTarget,
+            myWeekDone: overview.myWeeklyProgress,
+            myRank: mine?.rank ?? overview.memberCount,
+            memberCount: overview.memberCount,
+            myPoints: mine?.points ?? 0,
+            myStreak: mine?.streak ?? profile.currentStreak,
+            leaderName: leader?.displayName ?? profile.displayName ?? profile.name,
+            leaderPoints: leader?.points ?? 0,
+            checkedInToday: logs.some((log) => log.localDate === todayKey && !log.running),
+            members: members.map((member) => ({ id: member.userId, name: member.displayName, avatarUrl: member.avatarUrl })),
+            color: CARD_COLORS[index % CARD_COLORS.length]!,
+            league,
+          }
+        }))
+        if (!cancelled) {
+          setUser(profile)
+          setLeagues(summaries)
+        }
+      } catch (caught) {
+        if (!cancelled) setError(caught instanceof Error ? caught.message : 'Could not load your leagues.')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    void loadDashboard()
+    return () => { cancelled = true }
+  }, [today])
+
   function nextQuote() {
     setQuoteIndex((i) => (i + 1) % QUOTES.length)
   }
 
-  function handleJoin(e: FormEvent) {
+  async function handleJoin(e: FormEvent) {
     e.preventDefault()
     const code = joinCode.trim().toUpperCase()
     if (!code) return
-    onJoinLeague(code)
-    setJoinCode('')
+    setJoining(true)
+    setError('')
+    try {
+      await joinLeague(code)
+      window.location.reload()
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not join that league.')
+      setJoining(false)
+    }
+  }
+
+  function openLeague(summary: LeagueSummary) {
+    setActiveLeague(summary.league)
+    window.location.assign('/league')
   }
 
   return (
     <div className="db-page">
-      {/* ---------- Sidebar ---------- */}
-      <aside className="db-sidebar">
-        <div className="db-logo">
-          <span aria-hidden>⚡</span> LOCKED IN
-        </div>
-
-        <p className="db-eyebrow db-eyebrow--dark">Your clubhouse</p>
-        <a className="db-nav-link db-nav-link--active" href="#" aria-current="page">
-          Your leagues
-        </a>
-
-        <p className="db-eyebrow db-eyebrow--dark">Leagues</p>
-        <nav aria-label="Your leagues">
-          {LEAGUES.map((league) => (
-            <button key={league.id} className="db-nav-link db-nav-league" onClick={() => onOpenLeague(league.id)}>
-              <span className="db-nav-dot" style={{ background: league.checkedInToday ? '#c8f04f' : '#6b7d68' }} aria-hidden />
-              {league.name}
-            </button>
-          ))}
-        </nav>
-
-        <div className="db-sidebar-user">
-          <span className="db-avatar db-avatar--me" aria-hidden>
-            {initials(USER.name)}
-          </span>
-          <div>
-            <p className="db-user-name">{USER.name}</p>
-            <p className="db-user-school">{USER.school}</p>
-          </div>
-        </div>
-      </aside>
+      <AppSidebar active="leagues" clubhouseOnly />
 
       {/* ---------- Main ---------- */}
       <div className="db-main">
@@ -195,20 +184,24 @@ export default function Dashboard({
             <div>
               <p className="db-eyebrow">{dateLabel}</p>
               <h1 className="db-title">
-                {greeting(today.getHours())}, {first(USER.name)}.
+                {greeting(today.getHours())}, {first(userName)}.
               </h1>
               <p className="db-subtitle">
-                {LEAGUES.length === 0
+                {leagues.length === 0
                   ? 'Start a league or join one to get going.'
-                  : `${LEAGUES.length} ${LEAGUES.length === 1 ? 'league' : 'leagues'}, ${daysLeft} days left in the ${monthName} season.`}
+                  : `${leagues.length} ${leagues.length === 1 ? 'league' : 'leagues'}, ${daysLeft} days left in the ${monthName} season.`}
               </p>
             </div>
-            <button className="db-btn db-btn--primary" onClick={onCreateLeague}>
+            <button className="db-btn db-btn--primary" onClick={() => window.location.assign('/create-league')}>
               + New league
             </button>
           </div>
 
-          {LEAGUES.length === 0 ? (
+          {error && <div className="db-error" role="alert">{error}</div>}
+
+          {loading ? (
+            <section className="db-empty"><p className="db-hint">Loading your leagues…</p></section>
+          ) : leagues.length === 0 ? (
             /* ---------- Empty state ---------- */
             <section className="db-empty">
               <p className="db-empty-icon" aria-hidden>
@@ -219,10 +212,10 @@ export default function Dashboard({
                 Pick a goal, invite 3 to 14 friends, and start competing. Or join a friend's league with their code.
               </p>
               <div className="db-empty-actions">
-                <button className="db-btn db-btn--primary" onClick={onCreateLeague}>
+                <button className="db-btn db-btn--primary" onClick={() => window.location.assign('/create-league')}>
                   Create a league
                 </button>
-                <JoinForm code={joinCode} setCode={setJoinCode} onSubmit={handleJoin} />
+                <JoinForm code={joinCode} setCode={setJoinCode} onSubmit={handleJoin} disabled={joining} />
               </div>
             </section>
           ) : (
@@ -247,17 +240,17 @@ export default function Dashboard({
                   <h2 id="leagues-heading" className="db-card-title">
                     Your leagues
                   </h2>
-                  <JoinForm code={joinCode} setCode={setJoinCode} onSubmit={handleJoin} />
+                  <JoinForm code={joinCode} setCode={setJoinCode} onSubmit={handleJoin} disabled={joining} />
                 </div>
 
                 <ul className="db-grid">
-                  {LEAGUES.map((league) => (
+                  {leagues.map((league) => (
                     <li key={league.id}>
-                      <LeagueCard league={league} onOpen={() => onOpenLeague(league.id)} />
+                      <LeagueCard league={league} currentUserId={user?.id} onOpen={() => openLeague(league)} />
                     </li>
                   ))}
                   <li>
-                    <button className="db-card db-card--new" onClick={onCreateLeague}>
+                    <button className="db-card db-card--new" onClick={() => window.location.assign('/create-league')}>
                       <span className="db-new-plus" aria-hidden>
                         +
                       </span>
@@ -282,7 +275,7 @@ export default function Dashboard({
 
 // ---------- League card ----------
 
-function LeagueCard({ league, onOpen }: { league: LeagueSummary; onOpen: () => void }) {
+function LeagueCard({ league, currentUserId, onOpen }: { league: LeagueSummary; currentUserId?: number; onOpen: () => void }) {
   const progress = Math.min(league.myWeekDone / league.weeklyTarget, 1)
   const goalMet = league.myWeekDone >= league.weeklyTarget
   const isLeader = league.myRank === 1
@@ -337,9 +330,9 @@ function LeagueCard({ league, onOpen }: { league: LeagueSummary; onOpen: () => v
 
         <span className="db-card-footer">
           <span className="db-avatars" aria-hidden>
-            {shown.map((name) => (
-              <span key={name} className={`db-avatar ${name === USER.name ? 'db-avatar--me' : ''}`}>
-                {initials(name)}
+            {shown.map((member) => (
+              <span key={member.id} className={`db-avatar ${member.id === currentUserId ? 'db-avatar--me' : ''}`}>
+                {member.avatarUrl ? <img src={member.avatarUrl} alt="" /> : initials(member.name)}
               </span>
             ))}
             {extra > 0 && <span className="db-avatar">+{extra}</span>}
@@ -359,10 +352,12 @@ function JoinForm({
   code,
   setCode,
   onSubmit,
+  disabled,
 }: {
   code: string
   setCode: (value: string) => void
   onSubmit: (e: FormEvent) => void
+  disabled: boolean
 }) {
   return (
     <form className="db-join" onSubmit={onSubmit}>
@@ -377,8 +372,8 @@ function JoinForm({
         maxLength={8}
         autoComplete="off"
       />
-      <button type="submit" className="db-btn db-btn--ghost">
-        Join
+      <button type="submit" className="db-btn db-btn--ghost" disabled={disabled || !code.trim()}>
+        {disabled ? 'Joining…' : 'Join'}
       </button>
     </form>
   )
