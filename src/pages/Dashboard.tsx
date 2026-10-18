@@ -14,6 +14,7 @@ import {
 import type { League } from '../services/leagueService'
 import type { UserProfile } from '../types/api'
 import AppSidebar from '../components/AppSidebar'
+import { resolveImageUrl } from '../services/imageService'
 
 // ---------- Mock data (replace with real data from the backend later) ----------
 
@@ -334,7 +335,7 @@ function LeagueCard({ league, currentUserId, onOpen }: { league: LeagueSummary; 
           <span className="db-avatars" aria-hidden>
             {shown.map((member) => (
               <span key={member.id} className={`db-avatar ${member.id === currentUserId ? 'db-avatar--me' : ''}`}>
-                {member.avatarUrl ? <img src={member.avatarUrl} alt="" /> : initials(member.name)}
+                {member.avatarUrl ? <img src={resolveImageUrl(member.avatarUrl)} alt="" /> : initials(member.name)}
               </span>
             ))}
             {extra > 0 && <span className="db-avatar">+{extra}</span>}
