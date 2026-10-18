@@ -6,6 +6,7 @@ export type ActivityType =
   | 'goal'
   | 'lead'
   | 'update'
+  | 'session'
 
 export interface FeedMember {
   id: string

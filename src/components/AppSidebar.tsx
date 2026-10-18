@@ -18,8 +18,8 @@ const links: Array<{ id: SidebarPage; label: string; href: string; icon: string 
   { id: 'activity', label: 'Log activity', href: '/timer', icon: '✓' },
   { id: 'feed', label: 'Live feed', href: '/feed', icon: '◉' },
   { id: 'leaderboard', label: 'Leaderboard', href: '/leaderboard', icon: '▥' },
-  { id: 'awards', label: 'Monthly awards', href: '/monthly-awards', icon: '♕' },
   { id: 'challenges', label: 'Daily challenges', href: '/daily-challenges', icon: '◎' },
+  { id: 'awards', label: 'Monthly recap', href: '/monthly-awards', icon: '♕' },
 ]
 
 function initials(name: string) {

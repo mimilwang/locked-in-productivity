@@ -1,15 +1,15 @@
 /* Locked In — "Your leagues" dashboard styles */
 
 .db-page {
-  --green-900: #13261b;
-  --green-800: #1c3526;
-  --green-700: #2c4a37;
-  --lime: #c8f04f;
-  --lime-soft: #eef4dc;
-  --cream: #f4f1e9;
+  --green-900: #0f1f3d;
+  --green-800: #17305c;
+  --green-700: #284a85;
+  --lime: #f4d35e;
+  --lime-soft: #fbf1cf;
+  --cream: #faf6ec;
   --card: #fffdf8;
   --border: #e3ddd0;
-  --text: #1b1d1a;
+  --text: #0f1c33;
   --muted: #6e6f68;
 
   /* Break out of the centered #root box from index.css so the page is full width */
@@ -57,7 +57,7 @@
 }
 
 .db-logo {
-  font-family: 'Oswald', sans-serif;
+  font-family: var(--font-display);
   font-size: 22px;
   font-weight: 600;
   color: #fff;
@@ -205,7 +205,7 @@
 }
 
 .db-page .db-title {
-  font-family: 'Oswald', sans-serif;
+  font-family: var(--font-display);
   font-size: 40px;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -228,7 +228,7 @@
 }
 
 .db-page .db-card-title {
-  font-family: 'Oswald', sans-serif;
+  font-family: var(--font-display);
   font-size: 20px;
   font-weight: 500;
   letter-spacing: 0;
@@ -250,7 +250,7 @@
 
 .db-btn--primary {
   background: var(--lime);
-  border: 1px solid #a9d23a;
+  border: 1px solid #e8bf3a;
   color: var(--green-900);
 }
 
@@ -297,7 +297,7 @@
   position: absolute;
   top: -28px;
   left: 16px;
-  font-family: 'Oswald', sans-serif;
+  font-family: var(--font-display);
   font-size: 160px;
   line-height: 1;
   color: var(--lime);
@@ -314,7 +314,7 @@
 
 .db-quote-body blockquote {
   margin: 0;
-  font-family: 'Oswald', sans-serif;
+  font-family: var(--font-display);
   font-size: clamp(22px, 3vw, 30px);
   font-weight: 500;
   line-height: 1.25;
@@ -425,7 +425,7 @@
 
 .db-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(19, 38, 27, 0.12);
+  box-shadow: 0 10px 24px rgba(15, 31, 61, 0.12);
 }
 
 .db-cover {
@@ -444,7 +444,7 @@
 }
 
 .db-rank {
-  font-family: 'Oswald', sans-serif;
+  font-family: var(--font-display);
   font-size: 22px;
   font-weight: 600;
   color: var(--lime);
@@ -473,7 +473,7 @@
 }
 
 .db-cover-name {
-  font-family: 'Oswald', sans-serif;
+  font-family: var(--font-display);
   font-size: 24px;
   font-weight: 600;
   line-height: 1.15;
@@ -527,7 +527,7 @@
 
 .db-card-stat-value {
   display: block;
-  font-family: 'Oswald', sans-serif;
+  font-family: var(--font-display);
   font-size: 22px;
   font-weight: 500;
   line-height: 1.2;
@@ -622,7 +622,7 @@
 }
 
 .db-new-title {
-  font-family: 'Oswald', sans-serif;
+  font-family: var(--font-display);
   font-size: 18px;
   font-weight: 500;
 }

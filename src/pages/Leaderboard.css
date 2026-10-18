@@ -1,15 +1,15 @@
 /* Locked In — Leaderboard page styles (matches the Figma design) */
 
 .lb-page {
-  --green-900: #13261b;
-  --green-800: #1c3526;
-  --green-700: #2c4a37;
-  --lime: #c8f04f;
-  --lime-soft: #eef4dc;
-  --cream: #f4f1e9;
+  --green-900: #0f1f3d;
+  --green-800: #17305c;
+  --green-700: #284a85;
+  --lime: #f4d35e;
+  --lime-soft: #fbf1cf;
+  --cream: #faf6ec;
   --card: #fffdf8;
   --border: #e3ddd0;
-  --text: #1b1d1a;
+  --text: #0f1c33;
   --muted: #6e6f68;
 
   /* Break out of the centered #root box from index.css so the page is full width */
@@ -57,7 +57,7 @@
 }
 
 .lb-logo {
-  font-family: 'Oswald', sans-serif;
+  font-family: var(--font-display);
   font-size: 22px;
   font-weight: 600;
   color: #fff;
@@ -175,7 +175,7 @@
 }
 
 .lb-page .lb-title {
-  font-family: 'Oswald', sans-serif;
+  font-family: var(--font-display);
   font-size: 40px;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -239,7 +239,7 @@
 }
 
 .lb-leader-name {
-  font-family: 'Oswald', sans-serif;
+  font-family: var(--font-display);
   font-size: 24px;
   font-weight: 600;
   color: #fff;
@@ -258,7 +258,7 @@
 }
 
 .lb-stat-value {
-  font-family: 'Oswald', sans-serif;
+  font-family: var(--font-display);
   font-size: 26px;
   font-weight: 500;
   text-transform: uppercase;
@@ -287,7 +287,7 @@
 }
 
 .lb-page .lb-card-title {
-  font-family: 'Oswald', sans-serif;
+  font-family: var(--font-display);
   font-size: 20px;
   font-weight: 500;
   letter-spacing: 0;
@@ -359,13 +359,13 @@
 }
 
 .lb-rank {
-  font-family: 'Oswald', sans-serif;
+  font-family: var(--font-display);
   font-size: 18px;
   font-weight: 500;
 }
 
 .lb-points {
-  font-family: 'Oswald', sans-serif;
+  font-family: var(--font-display);
   font-size: 20px;
   font-weight: 500;
 }
@@ -456,7 +456,7 @@
 }
 
 .lb-today-points {
-  font-family: 'Oswald', sans-serif;
+  font-family: var(--font-display);
   font-size: 18px;
   font-weight: 500;
 }
@@ -536,4 +536,36 @@
   .lb-hide-sm {
     display: none;
   }
+}
+
+/* ---------- Personal status, crown, Chud Zone ---------- */
+.lb-status {
+  margin: 0 0 20px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: rgba(40, 74, 133, 0.08);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.lb-crown {
+  margin-left: 6px;
+  font-size: 0.95em;
+}
+
+.lb-chud-divider td {
+  padding: 10px 0 4px;
+  border-top: 2px dashed currentColor;
+  opacity: 0.7;
+}
+
+.lb-chud-divider span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.lb-row--chud td {
+  opacity: 0.85;
 }
