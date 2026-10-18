@@ -131,29 +131,28 @@ export default function LeagueOverviewPage({ league, leagues, onSelectLeague }: 
         </header>
 
         <div className="content">
-          <section className="league-switcher" aria-label="Choose active league">
-            <div>
-              <span>ACTIVE LEAGUE</span>
-              <select value={league.id} onChange={(event) => {
-                const selected = leagues.find((item) => item.id === Number(event.target.value))
-                if (selected) onSelectLeague(selected)
-              }}>
-                {leagues.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-              </select>
-            </div>
-            <div className="league-switcher__actions">
-              <span className="league-switcher__code">INVITE CODE: <strong>{league.inviteCode}</strong></span>
-            </div>
-          </section>
           <section className="welcome">
             <div>
               <p className="eyebrow">{league.name.toUpperCase()} / CURRENT SEASON</p>
               <h1>Lock in.</h1>
               <p className="subhead">Welcome back, {user?.displayName || user?.name || 'player'}. Your people are showing up. You in?</p>
             </div>
-            <div className="welcome-actions">
-              <InvitePanel key={league.id} league={league} initialEmails={newLeagueEmails} startOpen={newLeagueEmails.length > 0} />
-              <a className="primary-button" href="/timer">Lock in now →</a>
+            <div className="welcome-controls">
+              <section className="league-switcher" aria-label="Choose active league">
+                <div>
+                  <span className="league-switcher__label">ACTIVE LEAGUE</span>
+                  <select value={league.id} onChange={(event) => {
+                    const selected = leagues.find((item) => item.id === Number(event.target.value))
+                    if (selected) onSelectLeague(selected)
+                  }}>
+                    {leagues.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                  </select>
+                </div>
+              </section>
+              <div className="welcome-actions">
+                <span className="league-switcher__code">JOIN CODE: <strong>{league.inviteCode}</strong></span>
+                <InvitePanel key={league.id} league={league} initialEmails={newLeagueEmails} startOpen={newLeagueEmails.length > 0} />
+              </div>
             </div>
           </section>
 
@@ -192,7 +191,7 @@ export default function LeagueOverviewPage({ league, leagues, onSelectLeague }: 
                   <div className={leader.rank === 1 ? 'leader-row first' : 'leader-row'} key={leader.name}>
                     <span className="rank">{leader.rank.toString().padStart(2, '0')}</span>
                     <span className="avatar" style={{ background: leader.color }}>{leader.avatarUrl ? <img src={resolveImageUrl(leader.avatarUrl)} alt="" /> : leader.initials}</span>
-                    <span className="leader-name"><strong>{leader.name}</strong><small>{leader.checkedIn ? 'Checked in today' : 'Not checked in yet'}</small></span>
+                    <span className="leader-name"><strong>{leader.name}</strong>{leader.checkedIn && <small>Checked in today</small>}</span>
                     <strong className="points">{leader.points} <small>PTS</small></strong>
                   </div>
                 ))}
@@ -221,7 +220,7 @@ export default function LeagueOverviewPage({ league, leagues, onSelectLeague }: 
                 ))}
               </div>
 
-              <div className="weekly-note"><span>ϟ</span><p>{finishedLogs.length === 0 ? <><strong>No check-ins yet this week.</strong> Be the first to log.</> : <><strong>{weeklyPercent}% complete.</strong> Keep showing up together to reach the group goal.</>}</p></div>
+              <div className="weekly-note"><span>ϟ</span><p>{finishedLogs.length === 0 ? <><strong>No activities yet this week.</strong> Be the first to log.</> : <><strong>{weeklyPercent}% complete.</strong> Keep showing up together to reach the group goal.</>}</p></div>
             </section>
           </div>
 
@@ -283,8 +282,10 @@ const pageStyles = `
   .topbar { height: 68px; padding: 0 35px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #dddcd2; color: #6f7770; font-size: 11px; }
   .content { padding: 38px 40px 20px; max-width: 1350px; margin: 0 auto; }
   .welcome { display: flex; align-items: flex-end; justify-content: space-between; gap: 30px; margin-bottom: 30px; }
+  .welcome .eyebrow { margin-bottom: 22px; }
   .welcome h1 { margin: 0 0 7px; color: #244452; font: 800 clamp(35px, 4vw, 56px)/1 Impact, 'Arial Narrow', sans-serif; letter-spacing: .015em; }
   .subhead { margin: 0; color: #747a74; font-size: 13px; }
+  .welcome-controls { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
   .welcome-actions { display: flex; align-items: center; gap: 10px; }
   .invite-code-chip { color: #ffd66b !important; letter-spacing: .14em; }
   .primary-button { width: 172px; height: 48px; padding: 0 20px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 12px; background: #328eab; color: #fff; font-size: 16px; line-height: 20px; font-weight: 800; cursor: pointer; white-space: nowrap; text-decoration: none; }
@@ -293,21 +294,23 @@ const pageStyles = `
   .league-hero-copy { padding: 34px; }
   .league-meta { display: flex; gap: 22px; color: #ffd66b; font-size: 9px; letter-spacing: .08em; }
   .league-hero h2 { margin: 25px 0 10px; color: white; font: 800 35px/1 Impact, 'Arial Narrow', sans-serif; letter-spacing: .03em; }
-  .league-hero p { color: #b6c1b9; font-size: 13px; }
+  .league-hero p { color: #d8e3e5; font-size: 13px; }
   .member-row { margin-top: 32px; display: flex; align-items: center; }
   .member-row .avatar + .avatar { margin-left: -8px; }
-  .member-copy { margin-left: 14px; color: #acb7af; font-size: 11px; }
+  .member-copy { margin-left: 14px; color: #d8e3e5; font-size: 11px; }
   .member-copy strong { color: white; }
   .hero-score { padding: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #ff9778; color: #244452; }
   .hero-score strong { font: 800 80px/1 Impact, 'Arial Narrow', sans-serif; }
   .hero-score > span:last-child { margin-top: 7px; font-weight: 900; font-size: 12px; }
-  .league-switcher { margin-bottom: 20px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid #d8cfc2; border-radius: 7px; background: #fff; }
+  .league-switcher { position: relative; margin: 0; padding: 0; display: flex; align-items: center; justify-content: flex-end; gap: 10px; border: 0; background: transparent; }
+  .league-switcher > div { position: relative; z-index: 1; }
   .league-switcher > div:first-child { display: flex; align-items: center; gap: 12px; }
-  .league-switcher span { color: #788078; font-size: 9px; font-weight: 800; letter-spacing: .1em; }
-  .league-switcher select { height: 46px; padding: 0 36px 0 14px; border: 1px solid #d6d9d0; border-radius: 12px; background: #f9faf5; color: #17231b; font-weight: 800; cursor: pointer; }
-  .league-switcher__actions { display: flex; align-items: center; gap: 8px; }
-  .league-switcher .league-switcher__code { padding: 10px 12px; border-radius: 4px; background: #eff9da; color: #526c2c; font-size: 10px; font-weight: 700; letter-spacing: .08em; }
-  .league-switcher .league-switcher__code strong { color: #17231b; font-family: monospace; font-size: 12px; letter-spacing: .12em; }
+  .league-switcher .league-switcher__label { padding: 9px 12px; border-radius: 999px; background: #ffecb8; color: #244452; font-size: 10px; font-weight: 900; letter-spacing: .08em; }
+  .league-switcher select { width: 172px; height: 48px; min-width: 172px; padding: 0 40px 0 15px; box-sizing: border-box; border: 2px solid #244452; border-radius: 12px; background: #fff9ef; color: #244452; font-size: 12px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 0 #244452; }
+  .league-switcher select:hover { background: #fff; transform: translateY(-2px); box-shadow: 0 6px 0 #244452; }
+  .league-switcher select:focus-visible { outline: 3px solid #ff9778; outline-offset: 3px; }
+  .league-switcher__code { width: 172px; height: 48px; padding: 0 12px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 5px; border: 1.5px solid #244452; border-radius: 12px; background: #ffe0d5; color: #244452; font-family: var(--font-body) !important; font-size: 12px; font-weight: 800; letter-spacing: 0; white-space: nowrap; }
+  .league-switcher__code strong { color: #244452; font-family: var(--font-body) !important; font-size: 12px; letter-spacing: .04em; }
   .score-label { margin-bottom: 10px; font-size: 9px; letter-spacing: .13em; }
   .stats-strip { margin: 18px 0; display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid #d8cfc2; border-radius: 7px; background: #fff; }
   .stats-strip article { padding: 20px 22px; border-right: 1px solid #e3e4dc; }
@@ -374,7 +377,8 @@ const pageStyles = `
     .topbar { height: 52px; padding: 0 18px; }
     .topbar > span { display: none; }
     .content { padding: 28px 18px 18px; }
-    .league-switcher, .league-switcher__actions { align-items: stretch; flex-direction: column; }
+    .welcome-controls { width: 100%; align-items: stretch; }
+    .league-switcher { align-items: stretch; flex-direction: column; }
     .league-switcher > div:first-child { width: 100%; }
     .league-switcher select { flex: 1; min-width: 0; }
     .welcome { align-items: stretch; flex-direction: column; }

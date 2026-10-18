@@ -39,7 +39,7 @@ export default function InvitePanel({
     <div className="invite">
       <button type="button" className="invite__toggle" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
         <span className="invite__toggle-icon" aria-hidden>✉</span>
-        <span>Invite friends</span>
+        <span>INVITE FRIENDS</span>
       </button>
 
       {open && (

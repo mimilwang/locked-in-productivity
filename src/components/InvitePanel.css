@@ -13,9 +13,10 @@
   box-sizing: border-box;
   border: 1.5px solid var(--brand-navy, #244452);
   border-radius: 12px;
-  background: transparent;
+  background: #ffe0d5;
   color: var(--brand-navy, #244452);
-  font-size: 16px;
+  font-family: var(--font-body) !important;
+  font-size: 12px;
   line-height: 20px;
   font-weight: 800;
   white-space: nowrap;
@@ -29,8 +30,8 @@
 
 .invite__toggle:hover,
 .invite__toggle[aria-expanded='true'] {
-  background: var(--brand-navy, #244452);
-  color: var(--brand-cream, #fff9ef);
+  background: #ffd2c2;
+  color: var(--brand-navy, #244452);
 }
 
 .invite__panel {
