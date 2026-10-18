@@ -41,7 +41,8 @@ public class ScoringService {
                 .map(LeagueMember::getUserId)
                 .toList();
         List<ScoringEngine.LogEntry> entries = logs.findCompletedByLeagueId(leagueId).stream()
-                .map(log -> new ScoringEngine.LogEntry(log.getUserId(), log.getLocalDate(), log.getDurationMinutes()))
+                .map(log -> new ScoringEngine.LogEntry(log.getUserId(), log.getLocalDate(), log.getDurationMinutes(),
+                        log.getBonusPoints()))
                 .toList();
 
         ScoringEngine.Input input = new ScoringEngine.Input(league.getStartDate(), league.getEndDate(),

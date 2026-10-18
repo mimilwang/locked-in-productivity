@@ -6,6 +6,7 @@ import com.lockedin.common.TimeUtils;
 import com.lockedin.league.GoalType;
 import com.lockedin.league.League;
 import com.lockedin.league.LeagueService;
+import com.lockedin.progress.dto.CompleteChallengeRequest;
 import com.lockedin.progress.dto.LogResponse;
 import com.lockedin.progress.dto.ManualLogRequest;
 import com.lockedin.progress.dto.StartTimerRequest;
@@ -94,10 +95,46 @@ public class ProgressService {
         requireLeagueActive(league, day);
 
         Instant now = clock.instant();
+        String title = request.title() == null || request.title().isBlank() ? null : request.title().trim();
+        String note = request.note() == null || request.note().isBlank() ? null : request.note().trim();
+        List<String> photos = request.photoUrls() == null ? List.of()
+                : request.photoUrls().stream().filter(url -> url != null && !url.isBlank()).toList();
         ProgressLog log = logs.save(new ProgressLog(me, league.getId(), now, now, minutes,
-                LogSource.MANUAL, day, request.note()));
+                LogSource.MANUAL, day, title, note, photos));
         scoringService.recalculateLeague(league.getId());
         return LogResponse.from(log);
+    }
+
+    /**
+     * Daily challenge done: saved as an activity with bonus points (on top of the weekly cap).
+     * In TASKS leagues it also counts as 1 task. Once per challenge per day.
+     */
+    @Transactional
+    public LogResponse completeChallenge(Long me, Long leagueId, CompleteChallengeRequest request) {
+        leagueService.requireMember(leagueId, me);
+        League league = leagueService.getLeague(leagueId);
+        LocalDate today = TimeUtils.today(clock, userService.zoneOf(me));
+        requireLeagueActive(league, today);
+        String challengeId = request.challengeId().trim();
+        if (logs.findFirstByUserIdAndLeagueIdAndChallengeIdAndLocalDate(me, leagueId, challengeId, today).isPresent()) {
+            throw ApiException.conflict("You already completed this challenge today");
+        }
+        String note = request.note() == null || request.note().isBlank() ? null : request.note().trim();
+        ProgressLog log = logs.save(ProgressLog.challenge(me, leagueId, clock.instant(), today, challengeId,
+                request.title().trim(), note, request.points()));
+        scoringService.recalculateLeague(leagueId);
+        return LogResponse.from(log);
+    }
+
+    /** Undo today's completion of a daily challenge. */
+    @Transactional
+    public void undoChallenge(Long me, Long leagueId, String challengeId) {
+        leagueService.requireMember(leagueId, me);
+        LocalDate today = TimeUtils.today(clock, userService.zoneOf(me));
+        ProgressLog log = logs.findFirstByUserIdAndLeagueIdAndChallengeIdAndLocalDate(me, leagueId, challengeId, today)
+                .orElseThrow(() -> ApiException.notFound("You haven't completed this challenge today"));
+        logs.delete(log);
+        scoringService.recalculateLeague(leagueId);
     }
 
     public Optional<LogResponse> runningTimer(Long me) {

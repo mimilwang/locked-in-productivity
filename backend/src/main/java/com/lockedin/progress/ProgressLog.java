@@ -1,16 +1,22 @@
 package com.lockedin.progress;
 
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * One block of progress. A running timer has endedAt = null.
@@ -47,7 +53,26 @@ public class ProgressLog {
     @Column(nullable = false)
     private LocalDate localDate;
 
+    /** Short name for the activity, e.g. "Morning run". */
+    @Column(length = 100)
+    private String title;
+
+    /** The description. */
+    @Column(length = 1000)
     private String note;
+
+    /** For CHALLENGE logs: which daily challenge was completed. */
+    @Column(length = 60)
+    private String challengeId;
+
+    /** For CHALLENGE logs: bonus points added on top of the weekly goal score. */
+    private Integer bonusPoints; // null on older rows = 0
+
+    /** Up to 4 photos, as URLs returned by POST /images. */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "progress_log_photos", joinColumns = @JoinColumn(name = "log_id"))
+    @Column(name = "photo_url", length = 500)
+    private List<String> photoUrls = new ArrayList<>();
 
     protected ProgressLog() {
     }
@@ -62,6 +87,23 @@ public class ProgressLog {
         this.source = source;
         this.localDate = localDate;
         this.note = note;
+    }
+
+    /** A log with a title and photos (manual logs from the Log activity page). */
+    public ProgressLog(Long userId, Long leagueId, Instant startedAt, Instant endedAt, int durationMinutes,
+                       LogSource source, LocalDate localDate, String title, String note, List<String> photoUrls) {
+        this(userId, leagueId, startedAt, endedAt, durationMinutes, source, localDate, note);
+        this.title = title;
+        this.photoUrls = photoUrls == null ? new ArrayList<>() : new ArrayList<>(photoUrls);
+    }
+
+    /** A completed daily challenge: no minutes, a fixed bonus. */
+    public static ProgressLog challenge(Long userId, Long leagueId, Instant now, LocalDate localDate,
+                                        String challengeId, String title, String note, int bonusPoints) {
+        ProgressLog log = new ProgressLog(userId, leagueId, now, now, 0, LogSource.CHALLENGE, localDate, title, note, null);
+        log.challengeId = challengeId;
+        log.bonusPoints = bonusPoints;
+        return log;
     }
 
     public boolean isRunning() {
@@ -107,5 +149,21 @@ public class ProgressLog {
 
     public String getNote() {
         return note;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public List<String> getPhotoUrls() {
+        return photoUrls;
+    }
+
+    public String getChallengeId() {
+        return challengeId;
+    }
+
+    public int getBonusPoints() {
+        return bonusPoints == null ? 0 : bonusPoints;
     }
 }

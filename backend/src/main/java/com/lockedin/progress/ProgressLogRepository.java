@@ -15,6 +15,10 @@ public interface ProgressLogRepository extends JpaRepository<ProgressLog, Long> 
 
     List<ProgressLog> findByLeagueIdOrderByStartedAtDesc(Long leagueId);
 
+    /** Today's completion of one daily challenge, if any. */
+    Optional<ProgressLog> findFirstByUserIdAndLeagueIdAndChallengeIdAndLocalDate(
+            Long userId, Long leagueId, String challengeId, LocalDate localDate);
+
     List<ProgressLog> findByLeagueIdAndUserIdOrderByStartedAtDesc(Long leagueId, Long userId);
 
     /** Finished logs only. Running timers don't count for points yet. */

@@ -10,6 +10,7 @@ import com.lockedin.account.auth.AuthService;
 import com.lockedin.common.ApiException;
 import com.lockedin.league.GoalType;
 import com.lockedin.league.LeagueService;
+import com.lockedin.progress.dto.CompleteChallengeRequest;
 import com.lockedin.progress.dto.LogResponse;
 import com.lockedin.progress.dto.ManualLogRequest;
 import com.lockedin.progress.dto.StartTimerRequest;
@@ -17,6 +18,7 @@ import com.lockedin.scoring.LeaderboardPeriod;
 import com.lockedin.scoring.LeaderboardService;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,6 +68,43 @@ class ProgressServiceTest {
         assertEquals(30, today.weeklyPercent());
         assertEquals(90, today.minutes());
         assertEquals(2, today.tasks());
+    }
+
+    @Test
+    void manualLogKeepsTitleDescriptionAndPhotos() {
+        LogResponse log = progress.logManually(me, new ManualLogRequest(leagueId, 45, null, "  3 miles around the lake  ",
+                "Morning run", List.of("/images/a.png", "/images/b.jpg")));
+        assertEquals("Morning run", log.title());
+        assertEquals("3 miles around the lake", log.note());
+        assertEquals(List.of("/images/a.png", "/images/b.jpg"), log.photoUrls());
+        assertEquals(15, myWeeklyPoints()); // 45 of 300 minutes
+    }
+
+    @Test
+    void dailyChallengeGivesBonusPointsOnTopInTimeLeagues() {
+        progress.completeChallenge(me, leagueId, new CompleteChallengeRequest("fun-walk-buddy", "Buddy walk", 15, null));
+        var row = leaderboards.leaderboard(me, leagueId, LeaderboardPeriod.WEEKLY).get(0);
+        assertEquals(15, row.points());
+        assertEquals(0, row.weeklyPercent()); // no goal progress in a TIME league
+        assertEquals(1, row.tasks()); // but it shows as a completed activity
+    }
+
+    @Test
+    void dailyChallengeCountsAsATaskInTaskLeagues() {
+        Long taskLeague = leagues.create(me, TestFixtures.league(GoalType.TASKS, 4)).id();
+        progress.completeChallenge(me, taskLeague, new CompleteChallengeRequest("fun-journal-15", "Quick journal", 15, "felt good"));
+        assertEquals(40, leaderboards.leaderboard(me, taskLeague, LeaderboardPeriod.WEEKLY).get(0).points());
+    }
+
+    @Test
+    void dailyChallengeOnlyOncePerDayAndCanBeUndone() {
+        CompleteChallengeRequest walk = new CompleteChallengeRequest("fun-walk-buddy", "Buddy walk", 15, null);
+        progress.completeChallenge(me, leagueId, walk);
+        ApiException e = assertThrows(ApiException.class, () -> progress.completeChallenge(me, leagueId, walk));
+        assertEquals(HttpStatus.CONFLICT, e.getStatus());
+
+        progress.undoChallenge(me, leagueId, "fun-walk-buddy");
+        assertEquals(0, myWeeklyPoints());
     }
 
     @Test

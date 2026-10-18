@@ -354,3 +354,17 @@
     grid-template-columns: 1fr;
   }
 }
+
+.daily-challenges__error {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border: 1px solid #e1b2aa;
+  border-radius: 10px;
+  background: #fff0ed;
+  color: #8d2e21;
+  font-size: 14px;
+}
+
+.daily-challenges__error a {
+  color: inherit;
+}

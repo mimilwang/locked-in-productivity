@@ -24,14 +24,19 @@ import java.util.TreeMap;
  *     That's what the daily leaderboard shows, and monthly totals add up correctly even when a week
  *     spans two months.
  *   - TIME goals count minutes. TASKS goals count every log as 1 task.
+ *   - Daily challenges add their bonus points ON TOP (CHALLENGE_BONUS), outside the 100/week cap.
  */
 public final class ScoringEngine {
 
     private ScoringEngine() {
     }
 
-    /** One finished log, already turned into the user's local date. */
-    public record LogEntry(Long userId, LocalDate date, int minutes) {
+    /** One finished log, already turned into the user's local date. bonusPoints > 0 for daily challenges. */
+    public record LogEntry(Long userId, LocalDate date, int minutes, int bonusPoints) {
+
+        public LogEntry(Long userId, LocalDate date, int minutes) {
+            this(userId, date, minutes, 0);
+        }
     }
 
     /** Everything the engine needs to know about a league. */
@@ -80,7 +85,18 @@ public final class ScoringEngine {
             }
         }
 
-        awards.sort(Comparator.comparing(Award::date).thenComparing(Award::userId));
+        // 3. Daily challenge bonuses, on top of the weekly score.
+        for (LogEntry log : input.logs()) {
+            if (log.bonusPoints() <= 0 || !members.contains(log.userId())) {
+                continue;
+            }
+            if (log.date().isBefore(input.startDate()) || log.date().isAfter(input.endDate())) {
+                continue;
+            }
+            awards.add(new Award(log.userId(), log.date(), log.bonusPoints(), ScoreReason.CHALLENGE_BONUS));
+        }
+
+        awards.sort(Comparator.comparing(Award::date).thenComparing(Award::userId).thenComparing(Award::reason));
         return awards;
     }
 
