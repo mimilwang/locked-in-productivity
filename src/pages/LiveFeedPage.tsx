@@ -4,12 +4,13 @@ import { formatRelativeTime } from '../lib/liveFeed'
 import type { FeedActivity, ReactionEmoji } from '../types/feed'
 import './LiveFeedPage.css'
 import AppSidebar from '../components/AppSidebar'
-import { cachedUser } from '../services/authService'
+import { cachedUser, getMyProfile } from '../services/authService'
 import { getCachedLeague, getLeagueLogs, getLeagueMembers } from '../services/leagueService'
 import type { League, LeagueMember, ProgressLog } from '../services/leagueService'
 import { apiRequest } from '../services/apiClient'
 import { createFeedPost, createFeedReply, getFeed, toggleFeedReaction } from '../services/feedService'
 import type { FeedStateDto } from '../services/feedService'
+import type { UserProfile } from '../types/api'
 
 const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? 'http://localhost:8080'
 const imageSrc = (url: string) => (url.startsWith('http') ? url : `${API_URL}${url}`)
@@ -223,10 +224,10 @@ function combineFeed(base: FeedActivity[], state: FeedStateDto, leagueId: number
 }
 
 export default function LiveFeedPage() {
-  const me = useMemo(() => {
-    const user = cachedUser()
-    return user ? { id: String(user.id), name: user.displayName || user.name, avatarUrl: user.photoUrl ?? undefined } : { id: 'me', name: 'You', avatarUrl: undefined }
-  }, [])
+  const [profile, setProfile] = useState<UserProfile | null>(() => cachedUser())
+  const me = profile
+    ? { id: String(profile.id), name: profile.displayName || profile.name, avatarUrl: profile.photoUrl ?? undefined }
+    : { id: 'me', name: 'You', avatarUrl: undefined }
   const league = useMemo(() => getCachedLeague(), [])
   const [activities, setActivities] = useState<FeedActivity[]>([])
   const [error, setError] = useState('')
@@ -235,7 +236,13 @@ export default function LiveFeedPage() {
   const refresh = useCallback(async () => {
     if (!league) return
     try {
-      const [logs, members, feed] = await Promise.all([getLeagueLogs(league.id), getLeagueMembers(league.id), getFeed(league.id)])
+      const [logs, members, feed, latestProfile] = await Promise.all([
+        getLeagueLogs(league.id),
+        getLeagueMembers(league.id),
+        getFeed(league.id),
+        getMyProfile(),
+      ])
+      setProfile(latestProfile)
       const fromLogs = logsToActivities(logs, members, league)
       setActivities(combineFeed(fromLogs, feed, league.id, members))
       setError('')

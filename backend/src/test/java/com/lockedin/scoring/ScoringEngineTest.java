@@ -166,10 +166,9 @@ class ScoringEngineTest {
     }
 
     @Test
-    void challengesCountAsATaskInTaskLeagues() {
-        // 4-task goal: the challenge is 1 task (25) + its 15 bonus = 40
+    void challengesDoNotCountTowardTaskGoals() {
         List<Award> awards = tasks(List.of(1L), new LogEntry(1L, MON, 0, 15));
-        assertEquals(40, total(awards, 1L));
+        assertEquals(15, total(awards, 1L));
     }
 
     @Test

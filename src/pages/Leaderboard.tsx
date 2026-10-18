@@ -52,13 +52,28 @@ export default function Leaderboard() {
       setLoading(false)
       return
     }
-    Promise.all([getLeaderboard(league.id, 'monthly'), getLeaderboard(league.id, 'daily')])
-      .then(([monthly, daily]) => {
-        setStandings(monthly)
-        setTodaysRace(daily)
-      })
-      .catch((caught) => setError(caught instanceof Error ? caught.message : 'Could not load the leaderboard.'))
-      .finally(() => setLoading(false))
+    let mounted = true
+    const loadStandings = () => {
+      void Promise.all([getLeaderboard(league.id, 'monthly'), getLeaderboard(league.id, 'daily')])
+        .then(([monthly, daily]) => {
+          if (!mounted) return
+          setStandings(monthly)
+          setTodaysRace(daily)
+          setError('')
+        })
+        .catch((caught) => {
+          if (mounted) setError(caught instanceof Error ? caught.message : 'Could not load the leaderboard.')
+        })
+        .finally(() => {
+          if (mounted) setLoading(false)
+        })
+    }
+    loadStandings()
+    const interval = window.setInterval(loadStandings, 5_000)
+    return () => {
+      mounted = false
+      window.clearInterval(interval)
+    }
   }, [league?.id])
 
   const leagueName = league?.name ?? 'Your league'
