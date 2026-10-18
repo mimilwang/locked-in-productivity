@@ -1,4 +1,3 @@
-import { SEED_ACTIVITIES } from '../data/feedMock'
 import type { FeedActivity, ReactionEmoji } from '../types/feed'
 
 const STORAGE_KEY = 'locked-in:live-feed:v1'
@@ -35,16 +34,19 @@ function saveFeedStore(store: FeedStore): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(store))
 }
 
-/** Merge seed + extras, apply persisted reactions, newest first */
-export function getFeedActivities(leagueId: string): FeedActivity[] {
+/**
+ * Real activity (`base`, built from the league's logs) + posts made on this device,
+ * with saved reactions applied, newest first. No sample data: an empty league shows an empty feed.
+ */
+export function getFeedActivities(leagueId: string, base: FeedActivity[] = []): FeedActivity[] {
   const store = loadFeedStore()
   const byId = new Map<string, FeedActivity>()
 
-  for (const seed of SEED_ACTIVITIES) {
-    if (seed.leagueId !== leagueId) continue
-    byId.set(seed.id, {
-      ...seed,
-      reactions: store.reactions[seed.id] ?? seed.reactions,
+  for (const item of base) {
+    if (item.leagueId !== leagueId) continue
+    byId.set(item.id, {
+      ...item,
+      reactions: store.reactions[item.id] ?? item.reactions,
     })
   }
 
@@ -67,9 +69,10 @@ export function toggleReaction(
   userId: string,
   emoji: ReactionEmoji,
   leagueId: string,
+  base: FeedActivity[] = [],
 ): FeedActivity[] {
   const store = loadFeedStore()
-  const activities = getFeedActivities(leagueId)
+  const activities = getFeedActivities(leagueId, base)
   const activity = activities.find((a) => a.id === activityId)
   if (!activity) return activities
 
@@ -95,7 +98,7 @@ export function toggleReaction(
 
   store.reactions[activityId] = current.filter((r) => r.userIds.length > 0)
   saveFeedStore(store)
-  return getFeedActivities(leagueId)
+  return getFeedActivities(leagueId, base)
 }
 
 export function addFeedPost(input: {
@@ -104,7 +107,7 @@ export function addFeedPost(input: {
   actorName: string
   detail: string
   imageUrl?: string
-}): FeedActivity[] {
+}, base: FeedActivity[] = []): FeedActivity[] {
   const store = loadFeedStore()
   const post: FeedActivity = {
     id: `act-user-${Date.now()}`,
@@ -119,7 +122,7 @@ export function addFeedPost(input: {
   }
   store.extras = [post, ...store.extras]
   saveFeedStore(store)
-  return getFeedActivities(input.leagueId)
+  return getFeedActivities(input.leagueId, base)
 }
 
 export function formatRelativeTime(iso: string, now = Date.now()): string {
