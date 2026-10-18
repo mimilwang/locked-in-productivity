@@ -14,7 +14,7 @@ export type SidebarPage =
 
 const links: Array<{ id: SidebarPage; label: string; href: string; icon: string }> = [
   { id: 'leagues', label: 'Your leagues', href: '/overview', icon: '⚑' },
-  { id: 'dashboard', label: 'Dashboard', href: '/overview', icon: '▦' },
+  { id: 'dashboard', label: 'Dashboard', href: '/league', icon: '▦' },
   { id: 'activity', label: 'Log activity', href: '/timer', icon: '✓' },
   { id: 'feed', label: 'Live feed', href: '/feed', icon: '◉' },
   { id: 'leaderboard', label: 'Leaderboard', href: '/leaderboard', icon: '▥' },
@@ -26,10 +26,11 @@ function initials(name: string) {
   return name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase()
 }
 
-export default function AppSidebar({ active }: { active: SidebarPage }) {
+export default function AppSidebar({ active, clubhouseOnly = false }: { active: SidebarPage; clubhouseOnly?: boolean }) {
   const user = cachedUser()
   const league = getCachedLeague()
   const name = user?.displayName || user?.name || 'Alex Chen'
+  const visibleLinks = clubhouseOnly || !league ? links.slice(0, 1) : links
 
   return (
     <aside className="app-sidebar">
@@ -39,7 +40,7 @@ export default function AppSidebar({ active }: { active: SidebarPage }) {
 
       <p className="app-sidebar__label">YOUR CLUBHOUSE</p>
       <nav className="app-sidebar__nav" aria-label="Main navigation">
-        {links.map((link, index) => (
+        {visibleLinks.map((link, index) => (
           <div key={link.id}>
             {index === 1 && <p className="app-sidebar__label app-sidebar__league">{(league?.name || 'YOUR LEAGUE').toUpperCase()}</p>}
             <a
@@ -52,11 +53,6 @@ export default function AppSidebar({ active }: { active: SidebarPage }) {
           </div>
         ))}
       </nav>
-
-      <div className="app-sidebar__note">
-        <strong>BETTER TOGETHER.</strong>
-        <p>A little competition. A lot of showing up.</p>
-      </div>
 
       <a className="app-sidebar__profile" href="/profile" aria-current={active === 'profile' ? 'page' : undefined}>
         <span className="app-sidebar__avatar">{initials(name)}</span>

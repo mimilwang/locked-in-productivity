@@ -15,6 +15,8 @@ export type SignUpInput = {
 
 function saveSession(response: AuthResponse) {
   setAuthToken(response.token)
+  window.localStorage.removeItem('locked-in:active-league-id')
+  window.localStorage.removeItem('locked-in:active-league')
   window.localStorage.setItem(USER_KEY, JSON.stringify(response.user))
   return response.user
 }
@@ -66,5 +68,7 @@ export async function updateMyProfile(input: Partial<Pick<UserProfile, 'name' | 
 
 export function logout() {
   clearAuthToken()
+  window.localStorage.removeItem('locked-in:active-league-id')
+  window.localStorage.removeItem('locked-in:active-league')
   window.location.assign('/login')
 }

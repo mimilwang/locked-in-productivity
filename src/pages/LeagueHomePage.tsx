@@ -14,7 +14,11 @@ export default function LeagueHomePage() {
   useEffect(() => {
     getMyLeagues().then((loaded) => {
       setLeagues(loaded)
-      setActiveLeagueId((current) => loaded.some((league) => league.id === current) ? current : loaded[0]?.id ?? null)
+      setActiveLeagueId((current) => {
+        const selected = loaded.find((league) => league.id === current) ?? loaded[0] ?? null
+        if (selected) setActiveLeague(selected)
+        return selected?.id ?? null
+      })
     }).catch((caught) => setError(caught instanceof Error ? caught.message : 'Could not load your leagues.'))
   }, [])
 
