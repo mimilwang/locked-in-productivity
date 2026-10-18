@@ -3,6 +3,7 @@ import { createFocusSession, getFocusSessions, saveFocusSession } from '../lib/s
 import type { FocusSession } from '../lib/sessionLog'
 import { apiRequest } from '../services/apiClient'
 import { getActiveLeagueId } from '../services/leagueService'
+import AppSidebar from '../components/AppSidebar'
 
 const presets = [25, 45, 60]
 
@@ -89,16 +90,7 @@ export default function TimerPage() {
     <div className="timer-page">
       <style>{timerStyles}</style>
 
-      <aside className="timer-sidebar">
-        <a className="timer-brand" href="/overview"><span>ϟ</span> LOCKED IN</a>
-        <nav>
-          <a href="/overview">▦ <span>Overview</span></a>
-          <a className="active" href="/timer">◷ <span>Focus timer</span></a>
-          <a href="/leaderboard">▥ <span>Leaderboard</span></a>
-          <a href="/monthly-awards">♕ <span>Monthly awards</span></a>
-        </nav>
-        <div className="timer-user"><i>AC</i><span><strong>Alex Chen</strong><small>12 day streak</small></span></div>
-      </aside>
+      <AppSidebar active="activity" />
 
       <main className="timer-main">
         <header><span>THE 8 AM CLUB / FOCUS SESSION</span><a href="/overview">Back to overview →</a></header>

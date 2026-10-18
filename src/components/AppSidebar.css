@@ -1,0 +1,105 @@
+.app-sidebar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+  height: 100vh;
+  padding: 30px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  background: #13271d;
+  color: #dce6dd;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.2;
+  text-align: left;
+}
+
+.app-sidebar,
+.app-sidebar * {
+  box-sizing: border-box;
+}
+
+.app-sidebar .app-sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #fff;
+  font: 800 21px/1 Impact, 'Arial Narrow', sans-serif;
+  letter-spacing: .05em;
+  text-decoration: none;
+}
+
+.app-sidebar .app-sidebar__brand span { color: #baff43; font-size: 29px; line-height: 1; }
+.app-sidebar .app-sidebar__label { margin: 37px 0 8px; color: #8ea096; font-size: 9px; font-weight: 400; line-height: 11px; letter-spacing: .08em; }
+.app-sidebar .app-sidebar__league { margin: 24px 0 8px; }
+.app-sidebar .app-sidebar__nav { width: 100%; margin: 0; padding: 0; display: grid; gap: 4px; }
+.app-sidebar .app-sidebar__nav > div { margin: 0; padding: 0; display: grid; gap: 0; }
+.app-sidebar .app-sidebar__link {
+  min-height: 40px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 5px;
+  color: #aebbb1;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 20px;
+  text-decoration: none;
+}
+.app-sidebar .app-sidebar__link > span { width: 17px; text-align: center; font-size: 16px; line-height: 20px; }
+.app-sidebar .app-sidebar__link:hover { background: #20362b; color: #fff; }
+.app-sidebar .app-sidebar__link--active { background: #baff43; color: #13271d; font-weight: 800; }
+.app-sidebar .app-sidebar__link--active:hover { background: #baff43; color: #13271d; }
+.app-sidebar .app-sidebar__note { width: 100%; margin: auto 0 0; padding: 16px; border: 1px solid #405247; border-radius: 6px; }
+.app-sidebar .app-sidebar__note strong { margin: 0; color: #baff43; font-size: 9px; line-height: 11px; letter-spacing: .07em; }
+.app-sidebar .app-sidebar__note p { margin: 7px 0 0; color: #aebbb1; font-size: 11px; font-weight: 400; line-height: 16px; }
+.app-sidebar .app-sidebar__profile { width: 100%; margin: 25px 0 0; display: flex; align-items: center; gap: 10px; color: #eef3ef; font-size: 11px; line-height: 13px; text-decoration: none; }
+.app-sidebar .app-sidebar__profile strong { font-size: 11px; line-height: 13px; }
+.app-sidebar .app-sidebar__profile:hover strong { color: #baff43; }
+.app-sidebar .app-sidebar__avatar { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; border-radius: 50%; background: #baff43; color: #17231b; font-size: 9px; line-height: 1; }
+.app-sidebar .app-sidebar__profile small { max-width: 130px; margin: 3px 0 0; display: block; overflow: hidden; color: #91a096; font-size: 8px; font-weight: 400; line-height: 10px; text-overflow: ellipsis; white-space: nowrap; }
+
+.app-page-with-sidebar { min-height: 100vh; display: grid; grid-template-columns: 220px minmax(0, 1fr); }
+
+.overview-page,
+.timer-page,
+.lb-page,
+.lf-page,
+.cl-page {
+  display: grid !important;
+  grid-template-columns: 220px minmax(0, 1fr) !important;
+}
+
+@media (max-width: 850px) {
+  .app-page-with-sidebar { grid-template-columns: 72px minmax(0, 1fr); }
+  .overview-page,
+  .timer-page,
+  .lb-page,
+  .lf-page,
+  .cl-page { grid-template-columns: 72px minmax(0, 1fr) !important; }
+  .app-sidebar { width: 72px !important; min-width: 72px !important; max-width: 72px !important; padding: 24px 10px; align-items: center; }
+  .app-sidebar__brand { font-size: 0; }
+  .app-sidebar__brand span { font-size: 28px; }
+  .app-sidebar__label, .app-sidebar__note, .app-sidebar__profile > span:last-child { display: none; }
+  .app-sidebar__nav { width: 100%; margin-top: 38px; }
+  .app-sidebar__link { justify-content: center; font-size: 0; }
+  .app-sidebar__link > span { font-size: 17px; }
+}
+
+@media (max-width: 580px) {
+  .app-page-with-sidebar { display: block; }
+  .overview-page,
+  .timer-page,
+  .lb-page,
+  .lf-page,
+  .cl-page { display: block !important; }
+  .app-sidebar { position: static; width: 100% !important; min-width: 100% !important; max-width: 100% !important; height: auto; padding: 14px 18px; flex-direction: row; justify-content: space-between; }
+  .app-sidebar__brand { font-size: 18px; }
+  .app-sidebar__nav, .app-sidebar__note, .app-sidebar__profile { display: none; }
+}

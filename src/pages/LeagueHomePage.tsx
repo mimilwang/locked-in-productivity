@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import LeagueOverviewPage from './LeagueOverviewPage'
 import { getMyLeague, joinLeague } from '../services/leagueService'
 import type { League } from '../services/leagueService'
+import AppSidebar from '../components/AppSidebar'
 
 export default function LeagueHomePage() {
   const [league, setLeague] = useState<League | null | undefined>(undefined)
@@ -28,7 +29,7 @@ export default function LeagueHomePage() {
 
   if (league) return <LeagueOverviewPage />
 
-  return <main className="league-gate"><style>{gateStyles}</style><header><a href="/overview"><b>ϟ</b> LOCKED IN</a><a href="/profile">Profile</a></header><section>{league === undefined && !error ? <p>Loading your clubhouse…</p> : <><p className="gate-kicker">YOUR CLUBHOUSE</p><h1>Find your people.<br />Start showing up.</h1><p className="gate-intro">You can belong to one private league. Create one for your crew or enter the invite code a friend sent you.</p>{error && <div className="gate-error">{error}</div>}<div className="gate-options"><article><span>01</span><h2>Start a league</h2><p>Choose the shared goal, reward, and last-place consequence.</p><a href="/create-league">Create your league →</a></article><article><span>02</span><h2>Join your crew</h2><p>League invite codes are private and can only be used by signed-in players.</p><label>INVITE CODE<input value={inviteCode} onChange={(event) => setInviteCode(event.target.value.toUpperCase())} placeholder="LOCKED24" /></label><button onClick={join} disabled={joining || !inviteCode.trim()}>{joining ? 'Joining…' : 'Join league →'}</button></article></div></>}</section></main>
+  return <div className="app-page-with-sidebar"><AppSidebar active="leagues" /><main className="league-gate"><style>{gateStyles}</style><section>{league === undefined && !error ? <p>Loading your clubhouse…</p> : <><p className="gate-kicker">YOUR CLUBHOUSE</p><h1>Find your people.<br />Start showing up.</h1><p className="gate-intro">You can belong to one private league. Create one for your crew or enter the invite code a friend sent you.</p>{error && <div className="gate-error">{error}</div>}<div className="gate-options"><article><span>01</span><h2>Start a league</h2><p>Choose the shared goal, reward, and last-place consequence.</p><a href="/create-league">Create your league →</a></article><article><span>02</span><h2>Join your crew</h2><p>League invite codes are private and can only be used by signed-in players.</p><label>INVITE CODE<input value={inviteCode} onChange={(event) => setInviteCode(event.target.value.toUpperCase())} placeholder="LOCKED24" /></label><button onClick={join} disabled={joining || !inviteCode.trim()}>{joining ? 'Joining…' : 'Join league →'}</button></article></div></>}</section></main></div>
 }
 
 const gateStyles = `

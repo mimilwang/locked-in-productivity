@@ -1,0 +1,65 @@
+import { cachedUser } from '../services/authService'
+import './AppSidebar.css'
+
+export type SidebarPage =
+  | 'leagues'
+  | 'dashboard'
+  | 'activity'
+  | 'feed'
+  | 'leaderboard'
+  | 'awards'
+  | 'challenges'
+  | 'profile'
+
+const links: Array<{ id: SidebarPage; label: string; href: string; icon: string }> = [
+  { id: 'leagues', label: 'Your leagues', href: '/overview', icon: '⚑' },
+  { id: 'dashboard', label: 'Dashboard', href: '/overview', icon: '▦' },
+  { id: 'activity', label: 'Log activity', href: '/timer', icon: '✓' },
+  { id: 'feed', label: 'Live feed', href: '/feed', icon: '◉' },
+  { id: 'leaderboard', label: 'Leaderboard', href: '/leaderboard', icon: '▥' },
+  { id: 'awards', label: 'Monthly awards', href: '/monthly-awards', icon: '♕' },
+  { id: 'challenges', label: 'Daily challenges', href: '/daily-challenges', icon: '◎' },
+]
+
+function initials(name: string) {
+  return name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase()
+}
+
+export default function AppSidebar({ active }: { active: SidebarPage }) {
+  const user = cachedUser()
+  const name = user?.displayName || user?.name || 'Alex Chen'
+
+  return (
+    <aside className="app-sidebar">
+      <a className="app-sidebar__brand" href="/overview" aria-label="Locked In dashboard">
+        <span aria-hidden>ϟ</span> LOCKED IN
+      </a>
+
+      <p className="app-sidebar__label">YOUR CLUBHOUSE</p>
+      <nav className="app-sidebar__nav" aria-label="Main navigation">
+        {links.map((link, index) => (
+          <div key={link.id}>
+            {index === 1 && <p className="app-sidebar__label app-sidebar__league">THE 8 AM CLUB</p>}
+            <a
+              className={active === link.id ? 'app-sidebar__link app-sidebar__link--active' : 'app-sidebar__link'}
+              href={link.href}
+              aria-current={active === link.id ? 'page' : undefined}
+            >
+              <span aria-hidden>{link.icon}</span>{link.label}
+            </a>
+          </div>
+        ))}
+      </nav>
+
+      <div className="app-sidebar__note">
+        <strong>BETTER TOGETHER.</strong>
+        <p>A little competition. A lot of showing up.</p>
+      </div>
+
+      <a className="app-sidebar__profile" href="/profile" aria-current={active === 'profile' ? 'page' : undefined}>
+        <span className="app-sidebar__avatar">{initials(name)}</span>
+        <span><strong>{name}</strong><small>{user?.email || 'View your profile'}</small></span>
+      </a>
+    </aside>
+  )
+}
