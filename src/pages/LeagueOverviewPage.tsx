@@ -7,6 +7,7 @@ import { pendingInviteEmails } from '../lib/invites'
 import { cachedUser } from '../services/authService'
 import { getLeagueLogs, getLeagueMembers, getLeagueOverview } from '../services/leagueService'
 import type { League, LeagueMember, LeagueOverviewData, ProgressLog } from '../services/leagueService'
+import { resolveImageUrl } from '../services/imageService'
 
 type Leader = {
   rank: number
@@ -15,6 +16,7 @@ type Leader = {
   points: number
   checkedIn: boolean
   color: string
+  avatarUrl: string | null
 }
 
 const DAY_NAMES = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
@@ -44,6 +46,7 @@ export default function LeagueOverviewPage({ league, leagues, onSelectLeague }: 
     points: entry.points,
     checkedIn: entry.weeklyPercent > 0,
     color: ['#f4d35e', '#f3e3b0', '#f0d58a', '#d8ddd3', '#cdd7e8'][index % 5]!,
+    avatarUrl: entry.avatarUrl,
   })) ?? []
   const myStanding = overview?.weeklyLeaderboard.find((entry) => entry.userId === user?.id)
   const completed = overview?.myWeeklyProgress ?? 0
@@ -160,7 +163,7 @@ export default function LeagueOverviewPage({ league, leagues, onSelectLeague }: 
               <h2>{league.name}</h2>
               <p>{league.goalDescription} · {league.weeklyTarget} {targetUnit} each week.</p>
               <div className="member-row" aria-label="League members">
-                {dashboardLeaders.slice(0, 6).map((leader) => <span key={leader.name} className="avatar" style={{ background: leader.color }}>{leader.initials}</span>)}
+                {dashboardLeaders.slice(0, 6).map((leader) => <span key={leader.name} className="avatar" style={{ background: leader.color }}>{leader.avatarUrl ? <img src={resolveImageUrl(leader.avatarUrl)} alt="" /> : leader.initials}</span>)}
                 <span className="member-copy">Your crew is <strong>{weeklyPercent}%</strong> to this week’s goal.</span>
               </div>
             </div>
@@ -188,7 +191,7 @@ export default function LeagueOverviewPage({ league, leagues, onSelectLeague }: 
                 {dashboardLeaders.map((leader) => (
                   <div className={leader.rank === 1 ? 'leader-row first' : 'leader-row'} key={leader.name}>
                     <span className="rank">{leader.rank.toString().padStart(2, '0')}</span>
-                    <span className="avatar" style={{ background: leader.color }}>{leader.initials}</span>
+                    <span className="avatar" style={{ background: leader.color }}>{leader.avatarUrl ? <img src={resolveImageUrl(leader.avatarUrl)} alt="" /> : leader.initials}</span>
                     <span className="leader-name"><strong>{leader.name}</strong><small>{leader.checkedIn ? 'Checked in today' : 'Not checked in yet'}</small></span>
                     <strong className="points">{leader.points} <small>PTS</small></strong>
                   </div>
@@ -236,7 +239,7 @@ export default function LeagueOverviewPage({ league, leagues, onSelectLeague }: 
               ) : (
                 recentLogs.map((log) => (
                   <p key={log.id}>
-                    <span className="avatar avatar-small" style={{ background: '#f3e3b0' }}>{nameOf(log.userId).slice(0, 2).toUpperCase()}</span>
+                    <span className="avatar avatar-small" style={{ background: '#f3e3b0' }}>{members.find((member) => member.userId === log.userId)?.avatarUrl ? <img src={resolveImageUrl(members.find((member) => member.userId === log.userId)!.avatarUrl!)} alt="" /> : nameOf(log.userId).slice(0, 2).toUpperCase()}</span>
                     <span><strong>{nameOf(log.userId)}</strong> {describeLog(log)}<small>{formatRelativeTime(log.endedAt ?? log.startedAt)}</small></span>
                   </p>
                 ))
@@ -273,6 +276,7 @@ const pageStyles = `
   .sidebar-profile { margin-top: 32px; display: flex; align-items: center; gap: 10px; color: inherit; font-size: 12px; text-decoration: none; }
   .sidebar-profile small { display: block; color: #91a096; margin-top: 3px; font-size: 9px; }
   .avatar { width: 32px; height: 32px; flex: 0 0 auto; display: inline-grid; place-items: center; border-radius: 50%; color: #0f1c33; font-size: 10px; border: 2px solid #faf6ec; }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
   .avatar-green { background: #f4d35e; }
   .avatar-small { width: 30px; height: 30px; font-size: 9px; }
   .main-shell { min-width: 0; }

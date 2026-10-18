@@ -11,6 +11,7 @@ export type ActivityType =
 export interface FeedMember {
   id: string
   name: string
+  avatarUrl?: string
 }
 
 export interface ActivityReaction {

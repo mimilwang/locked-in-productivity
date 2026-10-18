@@ -247,6 +247,14 @@
   border: 1px solid #eedb9b;
 }
 
+.lf-avatar img,
+.lf-reply__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
 .lf-composer__body {
   flex: 1;
   min-width: 0;

@@ -4,6 +4,7 @@ import AppSidebar from '../components/AppSidebar'
 import { cachedUser } from '../services/authService'
 import { getCachedLeague, getLeaderboard } from '../services/leagueService'
 import type { LeaderboardEntry } from '../services/leagueService'
+import { resolveImageUrl } from '../services/imageService'
 
 // ---------- Helpers ----------
 
@@ -206,7 +207,7 @@ export default function Leaderboard() {
                                 <td>
                                   <div className="lb-member">
                                     <span className={`lb-avatar ${isMe ? 'lb-avatar--me' : ''}`} aria-hidden>
-                                      {initials(member.displayName)}
+                                      {member.avatarUrl ? <img src={resolveImageUrl(member.avatarUrl)} alt="" /> : initials(member.displayName)}
                                     </span>
                                     <span>
                                       {member.displayName}
