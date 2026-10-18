@@ -3,6 +3,7 @@ export type UserProfile = {
   name: string
   displayName: string
   email: string | null
+  school: string | null
   photoUrl: string | null
   timeZone: string
   currentStreak: number

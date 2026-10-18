@@ -75,6 +75,19 @@ class LeagueServiceTest {
     }
 
     @Test
+    void userCanBelongToMultipleLeagues() {
+        Long user = TestFixtures.newUser(auth, "MultiLeagueUser");
+        Long otherOwner = TestFixtures.newUser(auth, "OtherOwner");
+
+        leagues.create(user, TestFixtures.league(300));
+        leagues.create(user, TestFixtures.league(4));
+        String thirdLeagueCode = leagues.create(otherOwner, TestFixtures.league(5)).inviteCode();
+        join(user, thirdLeagueCode);
+
+        assertEquals(3, leagues.myLeagues(user).size());
+    }
+
+    @Test
     void readyToStartAtFourMembers() {
         Long owner = TestFixtures.newUser(auth, "Owner");
         String code = leagues.create(owner, TestFixtures.league(300)).inviteCode();

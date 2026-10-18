@@ -7,6 +7,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [school, setSchool] = useState('')
   const [timeZone, setTimeZone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Los_Angeles')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -19,7 +20,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
     setError('')
     try {
       if (isLogin) await login(email, password)
-      else await signUp({ name, displayName, email, password, timeZone })
+      else await signUp({ name, displayName, email, password, timeZone, school })
       window.location.assign('/overview')
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Something went wrong. Please try again.')
@@ -45,6 +46,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
           {!isLogin && <div className="auth-grid"><label>Name<input value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" required /></label><label>Display name<input value={displayName} onChange={(event) => setDisplayName(event.target.value)} autoComplete="nickname" required /></label></div>}
           <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required /></label>
           <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={isLogin ? 'current-password' : 'new-password'} minLength={8} required /></label>
+          {!isLogin && <label>School or university<input value={school} onChange={(event) => setSchool(event.target.value)} autoComplete="organization" placeholder="University of Washington" /></label>}
           {!isLogin && <label>Time zone<select value={timeZone} onChange={(event) => setTimeZone(event.target.value)}><option>America/Los_Angeles</option><option>America/Denver</option><option>America/Chicago</option><option>America/New_York</option><option>Europe/London</option><option>Asia/Tokyo</option><option>{timeZone}</option></select></label>}
           <button type="submit" disabled={loading}>{loading ? 'Please wait…' : isLogin ? 'Log in →' : 'Create account →'}</button>
           <p className="auth-switch">{isLogin ? 'New to Locked In?' : 'Already have an account?'} <a href={isLogin ? '/signup' : '/login'}>{isLogin ? 'Create an account' : 'Log in'}</a></p>

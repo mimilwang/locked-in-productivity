@@ -1,4 +1,5 @@
 import { cachedUser } from '../services/authService'
+import { getCachedLeague } from '../services/leagueService'
 import './AppSidebar.css'
 
 export type SidebarPage =
@@ -27,6 +28,7 @@ function initials(name: string) {
 
 export default function AppSidebar({ active }: { active: SidebarPage }) {
   const user = cachedUser()
+  const league = getCachedLeague()
   const name = user?.displayName || user?.name || 'Alex Chen'
 
   return (
@@ -39,7 +41,7 @@ export default function AppSidebar({ active }: { active: SidebarPage }) {
       <nav className="app-sidebar__nav" aria-label="Main navigation">
         {links.map((link, index) => (
           <div key={link.id}>
-            {index === 1 && <p className="app-sidebar__label app-sidebar__league">THE 8 AM CLUB</p>}
+            {index === 1 && <p className="app-sidebar__label app-sidebar__league">{(league?.name || 'YOUR LEAGUE').toUpperCase()}</p>}
             <a
               className={active === link.id ? 'app-sidebar__link app-sidebar__link--active' : 'app-sidebar__link'}
               href={link.href}
@@ -58,7 +60,7 @@ export default function AppSidebar({ active }: { active: SidebarPage }) {
 
       <a className="app-sidebar__profile" href="/profile" aria-current={active === 'profile' ? 'page' : undefined}>
         <span className="app-sidebar__avatar">{initials(name)}</span>
-        <span><strong>{name}</strong><small>{user?.email || 'View your profile'}</small></span>
+        <span><strong>{name}</strong><small>{user?.school || 'View your profile'}</small></span>
       </a>
     </aside>
   )

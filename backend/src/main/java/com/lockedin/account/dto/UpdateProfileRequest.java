@@ -7,5 +7,6 @@ public record UpdateProfileRequest(
         @Size(max = 80) String name,
         @Size(max = 40) String displayName,
         String timeZone,
-        String photoUrl) {
+        String photoUrl,
+        @Size(max = 120) String school) {
 }

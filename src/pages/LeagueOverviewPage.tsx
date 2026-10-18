@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { getFocusSessions } from '../lib/sessionLog'
 import AppSidebar from '../components/AppSidebar'
+import { cachedUser } from '../services/authService'
+import { getLeagueOverview } from '../services/leagueService'
+import type { League, LeagueOverviewData } from '../services/leagueService'
 
 type Leader = {
   rank: number
@@ -29,11 +32,30 @@ const days = [
   { day: 'SUN', value: 0 },
 ]
 
-export default function LeagueOverviewPage() {
+export default function LeagueOverviewPage({ league, leagues, onSelectLeague, onJoinLeague }: { league: League; leagues: League[]; onSelectLeague: (league: League) => void; onJoinLeague: (code: string) => Promise<void> }) {
   const [focusSessions] = useState(() => getFocusSessions())
+  const [overview, setOverview] = useState<LeagueOverviewData | null>(null)
+  const [joinCode, setJoinCode] = useState('')
+  const [joinError, setJoinError] = useState('')
+  const [joining, setJoining] = useState(false)
+  const user = cachedUser()
   const latestFocusSession = focusSessions[0]
-  const completed = 17 + Math.min(1, focusSessions.length)
-  const weeklyPercent = Math.round((completed / 24) * 100)
+  const dashboardLeaders: Leader[] = overview?.weeklyLeaderboard.map((entry, index) => ({
+    rank: entry.rank,
+    initials: entry.displayName.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase(),
+    name: entry.displayName,
+    points: entry.points,
+    checkedIn: entry.weeklyPercent > 0,
+    color: ['#baff43', '#d9e6cb', '#f0d58a', '#d8ddd3', '#cdd7e8'][index % 5]!,
+  })) ?? leaders
+  const myStanding = overview?.weeklyLeaderboard.find((entry) => entry.userId === user?.id)
+  const completed = overview?.myWeeklyProgress ?? focusSessions.length
+  const weeklyPercent = overview ? Math.round(overview.groupGoalProgress * 100) : 0
+  const targetUnit = league.goalType === 'TIME' ? 'minutes' : 'sessions'
+
+  useEffect(() => {
+    getLeagueOverview(league.id).then(setOverview).catch(() => setOverview(null))
+  }, [league.id])
 
   return (
     <div className="overview-page">
@@ -43,41 +65,72 @@ export default function LeagueOverviewPage() {
 
       <main className="main-shell" id="overview">
         <header className="topbar">
-          <span>Clubhouse / The 8 AM Club</span>
+          <span>Clubhouse / {league.name}</span>
         </header>
 
         <div className="content">
+          <section className="league-switcher" aria-label="Choose active league">
+            <div>
+              <span>ACTIVE LEAGUE</span>
+              <select value={league.id} onChange={(event) => {
+                const selected = leagues.find((item) => item.id === Number(event.target.value))
+                if (selected) onSelectLeague(selected)
+              }}>
+                {leagues.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+              </select>
+            </div>
+            <div className="league-switcher__actions">
+              <a href="/create-league">+ Create league</a>
+              <form onSubmit={async (event) => {
+                event.preventDefault()
+                setJoining(true)
+                setJoinError('')
+                try {
+                  await onJoinLeague(joinCode)
+                  setJoinCode('')
+                } catch (caught) {
+                  setJoinError(caught instanceof Error ? caught.message : 'Could not join that league.')
+                } finally {
+                  setJoining(false)
+                }
+              }}>
+                <input aria-label="League invite code" placeholder="INVITE CODE" value={joinCode} onChange={(event) => setJoinCode(event.target.value.toUpperCase())} />
+                <button disabled={joining || !joinCode.trim()}>{joining ? 'Joining…' : 'Join'}</button>
+              </form>
+            </div>
+          </section>
+          {joinError && <div className="league-switcher__error" role="alert">{joinError}</div>}
           <section className="welcome">
             <div>
-              <p className="eyebrow">THE 8 AM CLUB / OCTOBER SEASON</p>
+              <p className="eyebrow">{league.name.toUpperCase()} / CURRENT SEASON</p>
               <h1>Lock in.</h1>
-              <p className="subhead">Welcome back, Alex. Your people are showing up. You in?</p>
+              <p className="subhead">Welcome back, {user?.displayName || user?.name || 'player'}. Your people are showing up. You in?</p>
             </div>
             <a className="primary-button" href="/timer">Check in now →</a>
           </section>
 
           <section className="league-hero">
             <div className="league-hero-copy">
-              <div className="league-meta"><span>PRIVATE LEAGUE</span><span>6 MEMBERS</span><span>WEEK 3 OF 4</span></div>
-              <h2>The 8 AM Club</h2>
-              <p>Four focused study sessions each week. Phones down, brains on.</p>
+              <div className="league-meta"><span>PRIVATE LEAGUE</span><span>{league.memberCount} MEMBERS</span><span>{league.readyToStart ? 'SEASON ACTIVE' : 'WAITING FOR PLAYERS'}</span></div>
+              <h2>{league.name}</h2>
+              <p>{league.goalDescription} · {league.weeklyTarget} {targetUnit} each week.</p>
               <div className="member-row" aria-label="League members">
-                {leaders.map((leader) => <span key={leader.name} className="avatar" style={{ background: leader.color }}>{leader.initials}</span>)}
+                {dashboardLeaders.slice(0, 6).map((leader) => <span key={leader.name} className="avatar" style={{ background: leader.color }}>{leader.initials}</span>)}
                 <span className="member-copy">Your crew is <strong>{weeklyPercent}%</strong> to this week’s goal.</span>
               </div>
             </div>
             <div className="hero-score">
               <span className="score-label">YOUR POSITION</span>
-              <strong>#1</strong>
-              <span>120 PTS</span>
+              <strong>#{myStanding?.rank ?? '—'}</strong>
+              <span>{myStanding?.points ?? 0} PTS</span>
             </div>
           </section>
 
           <section className="stats-strip" aria-label="Your weekly statistics">
-            <article><span>YOUR STREAK</span><strong>12 <small>days</small></strong><p>Personal best: 18</p></article>
-            <article><span>THIS WEEK</span><strong>{Math.min(4, 3 + focusSessions.length)} <small>/ 4 sessions</small></strong><p>{focusSessions.length ? 'Your timer progress is logged' : 'One more to hit your goal'}</p></article>
-            <article><span>POINTS EARNED</span><strong>120</strong><p className="positive">↑ 25 from last week</p></article>
-            <article><span>LEAGUE RANK</span><strong>1st</strong><p>Holding the top spot</p></article>
+            <article><span>YOUR STREAK</span><strong>{user?.currentStreak ?? 0} <small>days</small></strong><p>Personal best: {user?.bestStreak ?? 0}</p></article>
+            <article><span>THIS WEEK</span><strong>{completed} <small>/ {league.weeklyTarget} {targetUnit}</small></strong><p>Your progress toward the weekly goal</p></article>
+            <article><span>POINTS EARNED</span><strong>{myStanding?.points ?? 0}</strong><p className="positive">Weekly score</p></article>
+            <article><span>LEAGUE RANK</span><strong>#{myStanding?.rank ?? '—'}</strong><p>{myStanding?.standing === 'LEADER' ? 'Holding the top spot' : 'Keep climbing'}</p></article>
           </section>
 
           <div className="dashboard-grid">
@@ -87,7 +140,7 @@ export default function LeagueOverviewPage() {
                 <a href="/leaderboard">Full leaderboard →</a>
               </div>
               <div className="leader-list">
-                {leaders.map((leader) => (
+                {dashboardLeaders.map((leader) => (
                   <div className={leader.rank === 1 ? 'leader-row first' : 'leader-row'} key={leader.name}>
                     <span className="rank">{leader.rank.toString().padStart(2, '0')}</span>
                     <span className="avatar" style={{ background: leader.color }}>{leader.initials}</span>
@@ -105,7 +158,7 @@ export default function LeagueOverviewPage() {
               </div>
 
               <div className="progress-copy">
-                <div><strong>{completed} / 24</strong><span>group sessions</span></div>
+                <div><strong>{overview?.membersHitWeeklyGoal ?? 0} / {overview?.memberCount ?? league.memberCount}</strong><span>members hit the goal</span></div>
                 <strong>{weeklyPercent}%</strong>
               </div>
               <div className="progress-track"><span style={{ width: `${weeklyPercent}%` }} /></div>
@@ -123,16 +176,16 @@ export default function LeagueOverviewPage() {
                 })}
               </div>
 
-              <div className="weekly-note"><span>ϟ</span><p><strong>6 sessions left.</strong> Everyone completes one more session and the league hits its weekly goal.</p></div>
+              <div className="weekly-note"><span>ϟ</span><p><strong>{weeklyPercent}% complete.</strong> Keep showing up together to reach the group goal.</p></div>
             </section>
           </div>
 
           <section className="bottom-grid">
             <article className="reward-card" id="awards">
               <p className="eyebrow">OCTOBER REWARD</p>
-              <h3>Winner eats free.</h3>
-              <p>The league covers the MVP’s meal at the end-of-month dinner.</p>
-              <span>12 days left in the season</span>
+              <h3>{league.reward}</h3>
+              <p>The reward chosen by your league for this season’s MVP.</p>
+              <span>{overview?.daysLeft ?? '—'} days left in the season</span>
             </article>
             <article className="activity-card">
               <div className="panel-heading"><h3>Recent activity</h3><a href="/feed">View all →</a></div>
@@ -194,6 +247,14 @@ const pageStyles = `
   .hero-score { padding: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #baff43; color: #17231b; }
   .hero-score strong { font: 800 80px/1 Impact, 'Arial Narrow', sans-serif; }
   .hero-score > span:last-child { margin-top: 7px; font-weight: 900; font-size: 12px; }
+  .league-switcher { margin-bottom: 20px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid #dbddd2; border-radius: 7px; background: #fff; }
+  .league-switcher > div:first-child { display: flex; align-items: center; gap: 12px; }
+  .league-switcher span { color: #788078; font-size: 9px; font-weight: 800; letter-spacing: .1em; }
+  .league-switcher select, .league-switcher input { height: 36px; padding: 0 11px; border: 1px solid #d6d9d0; border-radius: 4px; background: #f9faf5; color: #17231b; font-weight: 800; }
+  .league-switcher__actions, .league-switcher__actions form { display: flex; align-items: center; gap: 8px; }
+  .league-switcher__actions a, .league-switcher button { min-height: 36px; padding: 0 12px; display: inline-flex; align-items: center; border: 0; border-radius: 4px; background: #baff43; color: #17231b; font-size: 10px; font-weight: 900; text-decoration: none; cursor: pointer; }
+  .league-switcher button:disabled { opacity: .5; cursor: default; }
+  .league-switcher__error { margin: -10px 0 18px; padding: 10px 12px; border-radius: 5px; background: #fff0ed; color: #8d2e21; font-size: 11px; }
   .score-label { margin-bottom: 10px; font-size: 9px; letter-spacing: .13em; }
   .stats-strip { margin: 18px 0; display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid #dbddd2; border-radius: 7px; background: #fff; }
   .stats-strip article { padding: 20px 22px; border-right: 1px solid #e3e4dc; }
@@ -260,6 +321,9 @@ const pageStyles = `
     .topbar { height: 52px; padding: 0 18px; }
     .topbar > span { display: none; }
     .content { padding: 28px 18px 18px; }
+    .league-switcher, .league-switcher__actions { align-items: stretch; flex-direction: column; }
+    .league-switcher > div:first-child, .league-switcher__actions form { width: 100%; }
+    .league-switcher select, .league-switcher input { flex: 1; min-width: 0; }
     .welcome { align-items: stretch; flex-direction: column; }
     .league-hero { grid-template-columns: 1fr; }
     .hero-score { padding: 20px; flex-direction: row; gap: 15px; }

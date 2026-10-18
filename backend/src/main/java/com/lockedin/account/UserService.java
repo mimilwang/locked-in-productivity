@@ -72,6 +72,9 @@ public class UserService {
         if (request.photoUrl() != null) {
             user.setProfilePhotoUrl(request.photoUrl().isBlank() ? null : request.photoUrl());
         }
+        if (request.school() != null) {
+            user.setSchool(request.school().isBlank() ? null : request.school().trim());
+        }
         return profile(userId, true);
     }
 }

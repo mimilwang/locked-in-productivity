@@ -10,5 +10,6 @@ public record SignUpRequest(
         @NotBlank @Email String email,
         @NotBlank @Size(min = 8, max = 100) String password,
         @NotBlank String timeZone,
-        String photoUrl) {
+        String photoUrl,
+        @Size(max = 120) String school) {
 }

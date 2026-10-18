@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent, KeyboardEvent } from 'react'
 import './CreateLeague.css'
-import { apiRequest } from '../services/apiClient'
+import { createLeague } from '../services/leagueService'
 import AppSidebar from '../components/AppSidebar'
 
 // Preset choices for the stakes. "custom" lets the creator type their own.
@@ -67,17 +67,14 @@ export default function CreateLeague() {
     setSubmitting(true)
     setError('')
     try {
-      await apiRequest('/leagues', {
-        method: 'POST',
-        body: JSON.stringify({
-          name,
-          goalDescription: goal,
-          goalType: 'TASKS',
-          weeklyTarget: 4,
-          durationWeeks: 4,
-          reward: rewardText,
-          punishment: punishmentText,
-        }),
+      await createLeague({
+        name,
+        goalDescription: goal,
+        goalType: 'TASKS',
+        weeklyTarget: 4,
+        durationWeeks: 4,
+        reward: rewardText ?? '',
+        punishment: punishmentText ?? '',
       })
       window.location.assign('/overview')
     } catch (caught) {

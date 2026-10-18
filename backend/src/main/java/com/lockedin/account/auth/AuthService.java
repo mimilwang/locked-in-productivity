@@ -49,6 +49,7 @@ public class AuthService {
                 request.timeZone(),
                 clock.instant());
         user.setProfilePhotoUrl(request.photoUrl());
+        user.setSchool(request.school() == null || request.school().isBlank() ? null : request.school().trim());
         users.save(user);
 
         return new AuthResponse(jwtService.createToken(user.getId()), userService.profile(user.getId(), true));

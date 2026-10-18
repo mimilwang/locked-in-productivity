@@ -35,6 +35,9 @@ public class User {
 
     private String profilePhotoUrl;
 
+    @Column(length = 120)
+    private String school;
+
     @Column(nullable = false)
     private Instant createdAt;
 
@@ -93,6 +96,14 @@ public class User {
 
     public void setProfilePhotoUrl(String profilePhotoUrl) {
         this.profilePhotoUrl = profilePhotoUrl;
+    }
+
+    public String getSchool() {
+        return school;
+    }
+
+    public void setSchool(String school) {
+        this.school = school;
     }
 
     public Instant getCreatedAt() {
