@@ -10,7 +10,7 @@ We know what we should be doing — studying, working out, sleeping better — b
 
 ## How it works
 
-1. **Form a league** — Invite 4–15 friends into a private group.
+1. **Form a league** — Invite up to 15 friends into a private group.
 2. **Set a group goal** — Everyone works toward the same weekly objective.
 3. **Compete daily** — Earn points for progress, completed goals, streaks, and group contributions.
 4. **Crown the month** — Highest score becomes **MVP**. Lowest gets **Chud of the Month**.
@@ -18,34 +18,16 @@ We know what we should be doing — studying, working out, sleeping better — b
 
 ## Features
 
-- Private leagues with custom size (4–15 members)
+- Private leagues with custom size (up to 15 members)
 - Shared weekly goals + individual progress
 - Daily leaderboards and streak tracking
 - Monthly MVP / Chud of the Month titles
-- Group-defined rewards and punishment wheel
+- Group-defined rewards and punishments
 
 ## Tech stack
 
 - React + TypeScript
 - Vite
-
-## Getting started
-
-```bash
-npm install
-npm run dev
-```
-
-Then open the local URL Vite prints (usually `http://localhost:5173`).
-
-## Scripts
-
-| Command         | Description              |
-|-----------------|--------------------------|
-| `npm run dev`   | Start the dev server     |
-| `npm run build` | Typecheck and production build |
-| `npm run preview` | Preview the production build |
-| `npm run lint`  | Run ESLint               |
 
 ## License
 
